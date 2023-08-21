@@ -7,7 +7,8 @@ import bodyParser from "body-parser";
 exprApp.use(bodyParser({}));
 
 exprApp.get('/', (req:Request, res:Response) => {
-    res.sendFile(path.join(__dirname, '../views','indexSpp.html'))
+res.send('Hello!!!!')
+    /*res.sendFile(path.join(__dirname, '../views','indexSpp.html'))*/
 });
 
 
