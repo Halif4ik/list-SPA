@@ -4,14 +4,16 @@ const port = process.env.PORT || 3001
 import path from'path';
 import bodyParser from "body-parser";
 import {apiV1Route} from "./routes/api_V1_route";
+import {productsRepository} from "./repositories/products-repository";
 
 exprApp.use(express.static(path.join(__dirname, '../public')))
 exprApp.use('/uploads',express.static(path.join(__dirname, '../uploads')))
-/*exprApp.use(express.urlencoded({extended: true}))*/
 
+exprApp.use(express.urlencoded({extended: true}))
 exprApp.use(bodyParser({}));
-exprApp.use('/api/v1', apiV1Route);
 
+
+exprApp.use('/api/v1', apiV1Route);
 exprApp.use((req:Request, res:Response)=>{
     res.sendFile('/index.html');
 });
