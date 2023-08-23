@@ -5,6 +5,7 @@ interface IProduct {
     editable?: number
 }
 
+
 const products: Array<IProduct> = [{text: 'tomato', 'id': 1} as IProduct,
     {text: 'banana', 'id': 2} as IProduct, {text: 'cucumber', 'id': 3} as IProduct]
 
@@ -29,36 +30,40 @@ export const productsRepository = {
         return products;
     },
 
-    createProduct(text: string): IProduct |{ id: number } {
+    createProduct(text: string): { id: number } {
         const newId: number = products.length ? products[products.length - 1].id + 1 : 0;
-        const newProd = {
+        const newTask = {
             text: text,
             checked: false,
             id: newId
         } as IProduct
 
-        products.push(newProd);
-        return newProd;
+        console.log('newTask-', newTask);
+
+        products.push(newTask);
+        return {id: newId};
     },
 
-    /*  updateProduct(title: string, id: number): boolean {
-          const foundProduct: IProduct | undefined = products.find(function (product) {
-              return product.id === +id;
-          });
-          if (foundProduct) foundProduct.text = title;
-          return !!foundProduct;
+    updateProduct(text: string, id: number, checked: boolean): Boolean {
+        const foundProduct: IProduct | undefined = products.find(function (product) {
+            return product.id === id;
+        });
+        if (foundProduct) {
+            foundProduct.text = text;
+            foundProduct.checked = checked;
+            return true;
+        } else return false
 
-      },
-
-      deleteProduct(id: number): IProduct | undefined {
-          let deletedProduct: IProduct | undefined;
-          for (let i = 0; i < products.length; i++) {
-              if (products[i].id === id) {
-                  deletedProduct = products[i];
-                  products.splice(i, 1);
-                  return deletedProduct;
+    },
+          deleteProduct(id: number): IProduct | undefined {
+              let deletedProduct: IProduct | undefined;
+              for (let i = 0; i < products.length; i++) {
+                  if (products[i].id === id) {
+                      deletedProduct = products[i];
+                      products.splice(i, 1);
+                      return deletedProduct;
+                  }
               }
+              return undefined;
           }
-          return undefined;
-      }*/
 };
