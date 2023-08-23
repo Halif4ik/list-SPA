@@ -1,232 +1,20 @@
 <!DOCTYPE html>
-<!--
-README:
-
-- serve it as static file from your web app
-- OR serve it as separate purely static site:
-  1. place this file as `index.html` in new dir
-  2. find a way to host this file with some static server, for example:
-    - download `ran` to this dir from https://github.com/m3ng9i/ran/releases
-    - run the binary (but ensure that port 8080 is not taken)
-    - open http://localhost:8080
-    (if port 8080 is busy, find out other way to host the file, or ask in discord)
-    - OR under mac/linux just use: python -m SimpleHTTPServer 8080
-
--->
-<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Задачник</title>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <style>
-        *{
-            padding: 0;
-            margin: 0;
-        }
-        h1{
-            font-size: 60px;
-            font-family: Arial;
-            font-weight: bold;
-            color: black;
-            margin-left: 30px;
-        }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 5px solid #27ae60;
-            background: white;
-            align-items: center;
-        }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            color: rgba(0,0,0,.87);
-        }
-
-        button {
-            margin: 0;
-            padding: 0;
-            border: 0;
-            background: none;
-            font-size: 100%;
-            vertical-align: baseline;
-            font-family: inherit;
-            font-weight: inherit;
-            color: inherit;
-            -webkit-appearance: none;
-            appearance: none;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        body {
-            font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background: #f8f8f8;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            font-weight: 300;
-        }
-
-        :focus {
-            outline: 0;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .todoapp {
-            min-width: 150px;
-            max-width: 600px;
-            margin: 133px auto 0;
-        }
-
-        input {
-            position: relative;
-            margin: 0;
-            width: 100%;
-            font-family: inherit;
-            font-weight: inherit;
-            line-height: 1.4em;
-            color: inherit;
-            padding: 6px;
-            box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            border: 2px solid rgba(0,0,0,.08);
-            padding: 5px 10px;
-        }
-
-        h3 {
-            margin: 10px 0;
-        }
-
-        .new_todo_button{
-            width: 100%;
-            height: 100%;
-            padding: 10px;
-            background-color:#27ae60;
-            text-align: center;
-            color: white;
-        }
-
-        main{
-            width: 772px;
-            margin: 35px auto;
-        }
-        .task{
-            display: flex;
-            flex-direction: row;
-            padding: 2px 5px;
-            border: 2px solid rgba(0,0,0,.08);
-            margin-top: 10px;
-        }
-        .taskCompleted .task_content {
-            color: #27ae60;
-            text-decoration: line-through;
-        }
-
-        button{
-            cursor: pointer;
-            padding-left: 3px;
-            padding-right: 3px;
-        }
-        .status h3{
-            padding: 16px;
-        }
-
-        .contentText{
-            display: flex;
-            flex-direction: row;
-        }
-        .User{
-            display: flex;
-            flex-direction: row;
-            padding-left: 85%;
-        }
-
-        .wrapper {
-            background: #fff;
-            position: relative;
-            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
-            0 25px 50px 0 rgba(0, 0, 0, 0.1);
-            padding: 25px;
-        }
-        .login {
-            align-items: center;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .login button, .logout {
-            margin: 5px 10px;
-            padding: 5px 10px;
-            transition: background .1s,color .1s;
-        }
-        .login button:hover, .logout:hover {
-            background-color: rgba(0,0,0,.05);
-            transition: background .1s,color .1s;
-        }
-
-        .settings {
-            margin: 20px 0;
-        }
-        .settings label {
-            margin: 5px 0;
-            display: block;
-        }
-        .settings input {
-            width: 300px;
-        }
-
-        .settings button {
-            background: white;
-            margin: 2px;
-            padding: 2px 5px;
-            box-shadow: 0 2px 4px 0 rgb(0 0 0 / 20%), 0 25px 50px 0 rgb(0 0 0 / 10%);
-        }
-        .settings button.selected {
-            background: #27ae60;
-            color: white;
-        }
-        :focus {
-            outline: #27ae60 dashed 2px;
-        }
-        .edit-input {
-            border: none;
-            outline: #27ae60 dashed 2px;
-            width: auto;
-        }
-        button.primary {
-            background-color: #27ae60;
-            color: white;
-        }
-        button.primary:hover {
-            background-color: #295;
-            color: white;
-        }
-        .LoginInput {
-            max-width: 250px;
-        }
-        .LoginInput input{
-            margin-bottom: 16px;
-        }
-
-        hr {
-            margin-top: 50px;
-        }
-    </style>
 </head>
+
 <body>
 <div id="app">
     <header class="header">
-        <h1 class="logo">Ш<span style="color: #27ae60">++</span></h1>
+        <h1 class="logo"><span style="color: rgba(255,181,60,0.9)">dZENcode</span></h1>
     </header>
     <main>
-        <div class="settings">
+        <div class="settings" style=" display: flex;    flex-wrap: wrap;    justify-content: flex-start;
+    flex-direction: row;    gap: 17px;    width: 80vw;">
             <h3>Настройки приложения:</h2>
                 <label>
                     Api URL:
@@ -234,13 +22,11 @@ README:
                 </label>
                 <div>
                     На каком языке бекенд?
-                    <button @click="backendLanguage='PHP'" :class="{'selected': backendLanguage === 'PHP'}">PHP</button>
-                    <button @click="backendLanguage='JS'"  :class="{'selected': backendLanguage === 'JS'}">JS</button>
+                    <button @click="backendLanguage='JS'" :class="{'selected': backendLanguage === 'JS'}">JS</button>
                 </div>
                 <div>
                     Версия АПИ
                     <button @click="apiVersion='v1'" :class="{'selected': apiVersion === 'v1'}">v1</button>
-                    <button @click="apiVersion='v2'" :class="{'selected': apiVersion === 'v2'}">v2</button>
                 </div>
                 <div>
                     <button @click="getTasks()" class="primary">Поехали</button>
@@ -260,11 +46,12 @@ README:
         <div class="wrapper" v-else-if="step === 'items'">
             <h3>Добавить новую задачу:</h3>
             <label style="display: flex;">
-                <input @keyup.enter="addTask" class="new_todo" autofocus autocomplete="on" placeholder="выгулять кота соседа"
+                <input @keyup.enter="addTask" class="new_todo" autofocus autocomplete="on"
+                       placeholder="выгулять кота соседа"
                        type="text" v-model="new_task.text">
                 <span><button @click="addTask" class="button new_todo_button">Добавить</button></span>
             </label>
-            <h3 class="status_title">{{'Активные задачи: ' + tasks.length}}</h3>
+            <h3 class="status_title">{{ 'Активные задачи: ' + tasks.length }}</h3>
             <task @task_del="deleteTask(task.id)"
                   @task_edit="editTask(index)"
                   @task_done="markAsDone(index, task.id)"
@@ -288,31 +75,32 @@ README:
     Vue.component("task", {
         props: ["data", "index"],
         template: `
-    <div class="task" v-bind:class="{ taskCompleted: data.checked}" >
-        <div class="contentText">
+          <div class="task" v-bind:class="{ taskCompleted: data.checked}">
+          <div class="contentText">
             <div>
-                <button @click="$emit('task_done')" class="task_done taskButton">
-                    <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
-                    <span v-else style="color: #27ae60"> ☑ </span>
-                </button>
-                <span class="task_content" v-if="!data.editable">
-                    {{index}}. {{data.text}}
+              <button @click="$emit('task_done')" class="task_done taskButton">
+                <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
+                <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
+              </button>
+              <span class="task_content" v-if="!data.editable">
+                    {{ index }}. {{ data.text }}
                 </span>
-                <span v-else>
-                    {{index}}. <input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus class="edit-input"/>
+              <span v-else>
+                    {{ index }}. <input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
+                                        class="edit-input"/>
                 </span>
             </div>
             <div class="button check" v-if="!data.editable">
-                <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️ </button>
-                <button @click="$emit('task_del')" style="color: #cd1537;"> ✕ </button>
+              <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
+              <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
             </div>
             <div v-else>
-                <button @click="$emit('save')"> 💾 </button>
-                <button @click="$emit('disable')"> ✕ </button>
+              <button @click="$emit('save')"> 💾</button>
+              <button @click="$emit('disable')"> ✕</button>
             </div>
-        </div>
-    </div>
-    `
+          </div>
+          </div>
+        `
     });
 
     let vue = new Vue({
@@ -323,12 +111,11 @@ README:
                 editable: false,
                 checked: false
             },
-            tasks: [
-            ],
+            tasks: [],
             login: '',
             pass: '',
             backendLanguage: 'JS',
-            apiURL: 'http://localhost:3005/api/',
+            apiURL: 'http://localhost:3001/api/',
             apiVersion: 'v1',
             step: ''
         },
@@ -341,6 +128,7 @@ README:
             getTasks: function () {
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? '' : 'getItems'};
+
                 fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
                     credentials: 'include',
                     method: this.apiVersion === 'v1' ? 'GET' : 'POST',
@@ -354,6 +142,7 @@ README:
                                 item.editable = false;
                                 return item;
                             })
+                            console.log('this.tasks-', this.tasks);
                             this.step = 'items';
                         }
                     }).catch((error) => {
@@ -361,7 +150,7 @@ README:
                 })
             },
             deleteTask: function (index) {
-                let request = JSON.stringify({ id: index, });
+                let request = JSON.stringify({id: index,});
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? '' : 'deleteItem'};
                 fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
@@ -382,7 +171,7 @@ README:
             },
             addTask: function () {
                 if (this.new_task.text.trim() !== '') {
-                    let request = JSON.stringify({ text: this.new_task.text });
+                    let request = JSON.stringify({text: this.new_task.text});
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'createItem'};
                     fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
@@ -404,7 +193,11 @@ README:
                 }
             },
             updateTask: function (index, id) {
-                let request = JSON.stringify({ text: this.tasks[index].text, id: id, checked: this.tasks[index].checked });
+                let request = JSON.stringify({
+                    text: this.tasks[index].text,
+                    id: id,
+                    checked: this.tasks[index].checked
+                });
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
                 fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
@@ -457,7 +250,7 @@ README:
             },
             logIn() {
                 if (this.login.trim() !== '' && this.pass.trim()) {
-                    let params = JSON.stringify({ login: this.login, pass: this.pass });
+                    let params = JSON.stringify({login: this.login, pass: this.pass});
                     const route = this.apiVersion === 'v1' ? '/login' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'login'};
                     fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
@@ -484,7 +277,7 @@ README:
             },
             register() {
                 if (this.login.trim() !== '' && this.pass.trim()) {
-                    let params = JSON.stringify({ login: this.login, pass: this.pass });
+                    let params = JSON.stringify({login: this.login, pass: this.pass});
                     const route = this.apiVersion === 'v1' ? '/register' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'register'};
                     fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
