@@ -1,11 +1,11 @@
 import {body,query, validationResult} from 'express-validator'
 import {NextFunction, Request, Response} from "express";
 
-export function urlValidMiddleware() {
-    return query('person').isLength({min: 3, max: 10}).escape().withMessage("Query should be 3 ");
+export function idValid() {
+    return body('id').trim().isLength({min:1, max: 50}).isNumeric().withMessage("Id should be Number");
 }
 export function textValidMiddleware() {
-    return body('text').trim().isLength({min: 2, max: 10}).withMessage("Min length text field should be 3");
+    return body('text').trim().isLength({min: 3, max: 50}).escape().withMessage("Length text field should be 3-50");
 }
 
 export function emailValidMiddleware() {
