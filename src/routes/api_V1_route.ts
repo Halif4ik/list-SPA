@@ -1,6 +1,5 @@
 import {Request, Response, Router} from "express";
 import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
-import {productsRepository} from "../repositories/products-repository";
 
 import {todoModel} from "../models/todoModel";
 
