@@ -1,8 +1,10 @@
 import {Request, Response, Router} from "express";
-import {productsRepository} from "../repositories/products-repository";
-import {checkValidationInMiddleWare, textValidMiddleware,idValid} from "../midleware/validator";
-
 export const apiV1Route = Router({});
+import {checkValidationInMiddleWare, textValidMiddleware,idValid} from "../midleware/validator";
+import {productsRepository} from "../repositories/products-repository";
+
+import {todoModel} from "../models/todoModel";
+import {Sequelize} from 'sequelize'
 
 /*http://localhost:3001/api/v1/items?action=*/
 apiV1Route.get('/', (req: Request, res: Response) => {
