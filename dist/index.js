@@ -23,7 +23,7 @@ const port = process.env.PORT || 3001;
 const exprApp = (0, express_1.default)();
 exprApp.use(express_1.default.static(node_path_1.default.join(__dirname, '../public')));
 exprApp.use('/uploads', express_1.default.static(node_path_1.default.join(__dirname, '../uploads')));
-exprApp.use(express.urlencoded({extended: true}));
+exprApp.use(express_1.urlencoded({extended: true}));
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const sessionStore = new SequelizeStore({
     db: database_1.sequelize,
