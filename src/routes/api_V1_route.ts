@@ -1,31 +1,34 @@
 import {Request, Response, Router} from "express";
 import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
-
+import {isCorrectToken} from "../midleware/iscorectToken";
 import {todoModel} from "../models/todoModel";
 
 export const apiV1Route = Router({});
-let ID = 0;
+let ID = 1;
 
 /*get All*/
 apiV1Route.get('/', async (req: Request, res: Response) => {
+    if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
     try {
-        const allTodos = await todoModel.findAll();
+        const allTodos = await todoModel.findAll({
+            where: {
+                login: req.session.customer[0].login
+            }
+        });
         res.send({items: allTodos});
     } catch (e) {
         console.log(e);
         res.sendStatus(404)
     }
 });
-/*create ne task*/
-apiV1Route.post('/', textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
-    /*const autorHeders: string | undefined = req.headers.authorization;
-    if (autorHeders) {
-        const cutAuth = autorHeders.substring(autorHeders.indexOf(' ') + 1);
-        console.log('cutAuth-', cutAuth);
-        console.log(cutAuth === 'aGFsbDoxMjM=');
-    }*/
+/*create new task*/
+apiV1Route.post('/',isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+    if (!req.session.isAuthenticated) {
+        console.log('create new task Error');
+        return res.send({error: 'forbidden'});
+    }
     try {
-        const todoItem = todoModel.build({id: ID++, checked: req.body.done === 'true', text: req.body.text});
+        const todoItem = todoModel.build({id: ID++, checked: req.body.done === 'true', text: req.body.text,login:req.session.customer[0].login });
         await todoItem.save();
         res.status(201).send(todoItem);
     } catch (e) {
@@ -33,9 +36,9 @@ apiV1Route.post('/', textValidMiddleware(), checkValidationInMiddleWare, async (
         res.sendStatus(404)
     }
 });
+
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
 apiV1Route.put('/', textValidMiddleware(), idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
-
     try {
         const changedTodoItem = await todoModel.findByPk(+req.body.id);
         changedTodoItem?.text = req.body.text;
@@ -53,8 +56,8 @@ apiV1Route.put('/', textValidMiddleware(), idValid(), checkValidationInMiddleWar
 apiV1Route.delete('/', idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const deleteTodoItem = await todoModel.findAll({
-            where:{
-               id: +req.body.id
+            where: {
+                id: +req.body.id
             }
         });
         deleteTodoItem[0]?.destroy();

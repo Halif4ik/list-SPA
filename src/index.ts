@@ -2,6 +2,7 @@ import express, {Request, Response} from 'express';
 import path from 'node:path';
 import bodyParser from "body-parser";
 import {apiV1Route} from "./routes/api_V1_route";
+import {apiV1LoginRegisRoute} from "./routes/api_V1_login";
 import {sequelize} from './utils/database';
 import connect from 'connect';
 const session = require('express-session');
@@ -15,7 +16,6 @@ exprApp.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 exprApp.use(bodyParser({}));
 
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
-
 const sessionStore = new SequelizeStore({
     db: sequelize,
     checkExpirationInterval: 15 * 60 * 1000,
@@ -29,6 +29,7 @@ exprApp.use(session({
 }))
 
 exprApp.use('/api/v1/items', apiV1Route);
+exprApp.use('/api/v1', apiV1LoginRegisRoute);
 exprApp.use((req: Request, res: Response) => {
     res.sendFile('/index.html');
 });

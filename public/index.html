@@ -110,6 +110,7 @@
             },
             tasks: [],
             login: '',
+            _csrf: '',
             pass: '',
             backendLanguage: 'JS',
             apiURL: 'http://localhost:3001/api/',
@@ -167,7 +168,7 @@
             },
             addTask: function () {
                 if (this.new_task.text.trim() !== '') {
-                    let request = JSON.stringify({text: this.new_task.text});
+                    let request = JSON.stringify({text: this.new_task.text, _csrf:this._csrf});
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'createItem'};
                     fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
@@ -233,7 +234,6 @@
             },
             logout() {
                 const route = this.apiVersion === 'v1' ? '/logout' : '/router';
-                const qs = {action: this.apiVersion === 'v1' ? '' : 'logout'};
                 fetch(this.apiURL + this.apiVersion + route, {
                     method: this.apiVersion === 'v1' ? 'POST' : 'POST',
                     credentials: 'include',
@@ -248,6 +248,7 @@
             logIn() {
                 if (this.login.trim() !== '' && this.pass.trim()) {
                     let params = JSON.stringify({login: this.login, pass: this.pass});
+
                     const route = this.apiVersion === 'v1' ? '/login' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'login'};
                     fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
@@ -261,13 +262,15 @@
                         .then(res => res.json())
                         .then(response => {
                             if (response.ok) {
+                                this._csrf = response['_csrf'];
+                                console.log('this._csrf-', this._csrf);
                                 localStorage.setItem('name', this.login);
                                 this.getTasks();
                                 this.step = 'items';
                             } else if (response.error === 'not found') {
                                 alert('Такая комбинация логина и пароля не найдена');
                             } else {
-                                alert("Произошла ошибка. Посмотрите консоль разработчика чтоб увидеть подробности.")
+                                alert(`Произошла ошибка. ${response.errors[0].msg}.`)
                             }
                         })
                 }
@@ -289,7 +292,7 @@
                             if (response.ok) {
                                 this.logIn();
                             } else {
-                                alert("Произошла ошибка. Посмотрите консоль разработчика чтоб увидеть подробности.")
+                                alert(`Произошла ошибка. ${response.errors[0].msg}.`)
                             }
                         });
                 }

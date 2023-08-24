@@ -1,26 +1,22 @@
 import {DataTypes} from 'sequelize'
 import {sequelize} from '../utils/database';
 
-export const todoModel = sequelize.define('TodoList',{
+export const CustomerModel = sequelize.define('customer_list',{
     id:{
         primaryKey:true,
         autoIncrement:true,
         allowNull:false,
         type:DataTypes.INTEGER
     },
-    checked:{
-        allowNull:false,
-        type:DataTypes.BOOLEAN
-    },
-    text:{
+    login:{
         allowNull:false,
         type:DataTypes.STRING
     },
-    editable:{
-        allowNull:true,
-        type:DataTypes.BOOLEAN
+    pass:{
+        allowNull:false,
+        type:DataTypes.STRING
     },
-    login:{
+    csrf:{
         allowNull:false,
         type:DataTypes.STRING
     },

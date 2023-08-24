@@ -9,7 +9,14 @@ export function textValidMiddleware() {
 }
 
 export function emailValidMiddleware() {
-    return body('email').isEmail().withMessage("Email should be email");
+    return body('login').isEmail().withMessage("Email should be email");
+}
+
+export function passwordValidInBodyMiddleware () {
+    return body('pass', "Password should has characters or numbers should be longer 5 and less 20").trim().isLength({
+        min: 6,
+        max: 20
+    });
 }
 
 export function checkValidationInMiddleWare(req: Request, res: Response, next: NextFunction) {
