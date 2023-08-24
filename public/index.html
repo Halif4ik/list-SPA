@@ -6,15 +6,13 @@
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <link rel="stylesheet" href="/style.css">
 </head>
-
 <body>
 <div id="app">
     <header class="header">
         <h1 class="logo"><span style="color: rgba(255,181,60,0.9)">dZENcode</span></h1>
     </header>
     <main>
-        <div class="settings" style=" display: flex;flex-wrap: wrap;justify-content: flex-start;flex-direction: row;
-        gap: 17px;  width: 80vw;">
+        <div class="settings">
             <h3>Настройки приложения:</h2>
                 <label>
                     Api URL:
@@ -68,7 +66,6 @@
         <div class="wrapper" v-else-if="step === 'error'">
             Произошла ошибка. Откройте консоль разработчика чтоб увидеть подробности.
         </div>
-
     </main>
 </div>
 <script>
@@ -142,7 +139,6 @@
                                 item.editable = false;
                                 return item;
                             })
-                            console.log('this.tasks-', this.tasks);
                             this.step = 'items';
                         }
                     }).catch((error) => {
@@ -198,6 +194,7 @@
                     id: id,
                     checked: this.tasks[index].checked
                 });
+                /*{"text":"Djon!!!","id":1,"checked":true}*/
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
                 fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
@@ -214,7 +211,7 @@
                     });
             },
             markAsDone(index, id) {
-                this.$set(this.tasks[index], 'checked', this.tasks[index].checked === false)
+                this.$set(this.tasks[index], 'checked', !this.tasks[index].checked)
                 this.checked = this.tasks[index].checked;
                 this.updateTask(index, id)
             },

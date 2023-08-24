@@ -213,3 +213,12 @@ button.primary:hover {
 hr {
     margin-top: 50px;
 }
+
+.settings {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    flex-direction: row;
+    gap: 17px;
+    width: 80vw;
+}

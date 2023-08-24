@@ -1,4 +1,4 @@
-import {Sequelize,DataTypes} from 'sequelize'
+import {DataTypes} from 'sequelize'
 import {sequelize} from '../utils/database';
 
 export const todoModel = sequelize.define('TodoList',{
@@ -8,16 +8,20 @@ export const todoModel = sequelize.define('TodoList',{
         allowNull:false,
         type:DataTypes.INTEGER
     },
-    done:{
+    checked:{
         allowNull:false,
         type:DataTypes.BOOLEAN
     },
-    title:{
+    text:{
         allowNull:false,
         type:DataTypes.STRING
     },
-    date:{
+    editable:{
+        allowNull:true,
+        type:DataTypes.BOOLEAN
+    },
+  /*  date:{
         allowNull:false,
         type:DataTypes.DATE
-    },
+    },*/
 })
