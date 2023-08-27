@@ -16,15 +16,28 @@ const iscorectToken_1 = require("../midleware/iscorectToken");
 const todoModel_1 = require("../models/todoModel");
 exports.apiV1Route = (0, express_1.Router)({});
 let ID = 1;
-/*get All*/
+/*getAll*/
 exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!req.session.isAuthenticated)
+        return res.send({ error: 'forbidden' });
+    try {
+        const allTodos = yield todoModel_1.todoModel.findAll();
+        res.send({ items: allTodos });
+    }
+    catch (e) {
+        console.log(e);
+        res.sendStatus(404);
+    }
+}));
+/*getAll for only Current User*/
+exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.session.isAuthenticated)
         return res.send({ error: 'forbidden' });
     try {
         const allTodos = yield todoModel_1.todoModel.findAll({
             where: {
                 login: req.session.customer[0].login
-            }
+            },
         });
         res.send({ items: allTodos });
     }
@@ -40,7 +53,14 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
         return res.send({ error: 'forbidden' });
     }
     try {
-        const todoItem = todoModel_1.todoModel.build({ id: ID++, checked: req.body.done === 'true', text: req.body.text, login: req.session.customer[0].login });
+        const todoItem = todoModel_1.todoModel.build({
+            id: ID++,
+            checked: req.body.done === 'true',
+            text: req.body.text,
+            login: req.session.customer[0].login,
+            userName: req.session.customer[0].userName,
+            face: req.session.customer[0].face
+        });
         yield todoItem.save();
         res.status(201).send(todoItem);
     }
@@ -50,17 +70,23 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
     }
 }));
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
-exports.apiV1Route.put('/', (0, validator_1.textValidMiddleware)(), (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const changedTodoItem = yield todoModel_1.todoModel.findByPk(+req.body.id);
-        changedTodoItem === null || changedTodoItem === void 0 ? void 0 : changedTodoItem.text = req.body.text;
-        changedTodoItem === null || changedTodoItem === void 0 ? void 0 : changedTodoItem.checked = !!req.body.checked;
-        changedTodoItem === null || changedTodoItem === void 0 ? void 0 : changedTodoItem.save();
-        res.status(201).send({ 'ok': true });
+        const postIsChanging = yield todoModel_1.todoModel.findByPk(+req.body.id);
+        /*ckeking if curent user make changing*/
+        if (postIsChanging && postIsChanging.login === req.session.customer[0].login) {
+            postIsChanging.text = req.body.text;
+            postIsChanging.checked = !!req.body.checked;
+            postIsChanging === null || postIsChanging === void 0 ? void 0 : postIsChanging.save();
+            res.status(201).send({ 'ok': true });
+        }
+        else {
+            res.send({ 'bad': false });
+        }
     }
     catch (e) {
         console.log(e);
-        res.sendStatus(400).send({ 'bad': false });
+        res.sendStatus(409);
     }
 }));
 /* deleteTask */

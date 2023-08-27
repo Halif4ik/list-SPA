@@ -4,7 +4,7 @@ const DB_NAME = 'todo-ListSPA';
 const USER_NAME = 'root';
 const PASSWORD = 'gremlin2';
 
-export const sequelize = new Sequelize(DB_NAME,USER_NAME,PASSWORD,{
+export const sequelize: Sequelize = new Sequelize(DB_NAME, USER_NAME, PASSWORD, {
     dialect: 'mysql',
     host: 'localhost'
 })

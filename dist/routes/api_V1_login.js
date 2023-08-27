@@ -19,6 +19,7 @@ const csrf_1 = __importDefault(require("csrf"));
 const customerModel_1 = require("../models/customerModel");
 const { SEND_GRID_API_KEY, BASE_URL, HOST_EMAIL } = require('../constants');
 const bcrypt = require('bcryptjs');
+/*import {bcrypt} from 'bcryptjs';*/
 const nodemailer = require('nodemailer');
 const sgTransport = require('nodemailer-sendgrid-transport');
 exports.apiV1LoginRegisRoute = (0, express_1.Router)({});
@@ -27,14 +28,10 @@ const mailer = nodemailer.createTransport(sgTransport({
         api_key: SEND_GRID_API_KEY,
     }
 }));
+let arrHexsFaces = ['👩‍🦰'.codePointAt(0), '👨‍🦲'.codePointAt(0), '👲'.codePointAt(0), `👧`.codePointAt(0)];
+console.log(arrHexsFaces);
 /*Login*/
 exports.apiV1LoginRegisRoute.post('/login', (0, validator_1.emailValidMiddleware)(), (0, validator_1.passwordValidInBodyMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    /*const autorHeders: string | undefined = req.headers.authorization;
-    if (autorHeders) {
-        const cutAuth = autorHeders.substring(autorHeders.indexOf(' ') + 1);
-        console.log('cutAuth-', cutAuth);
-        console.log(cutAuth === 'aGFsbDoxMjM=');
-    }*/
     try {
         const { login, pass } = req.body;
         const registeredCustomer = yield customerModel_1.CustomerModel.findAll({
@@ -49,6 +46,7 @@ exports.apiV1LoginRegisRoute.post('/login', (0, validator_1.emailValidMiddleware
             req.session.customer = registeredCustomer;
             req.session.isAuthenticated = true;
             req.session.secretForCustomer = registeredCustomer[0].dataValues.csrf;
+            req.session.face = registeredCustomer[0].dataValues.face;
             const tokens = new csrf_1.default();
             const secret = req.session.secretForCustomer;
             const tokenSentToFront = yield tokens.create(secret);
@@ -73,16 +71,10 @@ exports.apiV1LoginRegisRoute.post('/login', (0, validator_1.emailValidMiddleware
 exports.apiV1LoginRegisRoute.post('/logout', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const registeredCustomer = req.session.customer;
-        console.log('deleteTodoItem---', registeredCustomer);
+        /*console.log('!!instanceof---',  req.session.customer instanceof (Model<CustomerModelStatic>));*/
         if (!registeredCustomer.length)
             return res.send({ errors: [{ "msg": "Wrong Logout", }] });
         else {
-            /* const deleteTodoItem = await CustomerModel.findAll({
-                 where: {
-                     login: registeredCustomer[0].login
-                 }
-             });
-            deleteTodoItem[0]?.destroy();*/
             req.session.isAuthenticated = false;
             req.session.secretForCustomer = '';
         }
@@ -100,8 +92,8 @@ exports.apiV1LoginRegisRoute.post('/logout', (req, res) => __awaiter(void 0, voi
     }
 }));
 /*register*/
-exports.apiV1LoginRegisRoute.post('/register', (0, validator_1.emailValidMiddleware)(), (0, validator_1.passwordValidInBodyMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { login, pass } = req.body;
+exports.apiV1LoginRegisRoute.post('/register', (0, validator_1.emailValidMiddleware)(), (0, validator_1.passwordValidInBodyMiddleware)(), (0, validator_1.homePValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { login, pass, userName, homePage } = req.body;
     const registeredCustomer = yield customerModel_1.CustomerModel.findAll({
         where: {
             login: login
@@ -115,11 +107,20 @@ exports.apiV1LoginRegisRoute.post('/register', (0, validator_1.emailValidMiddlew
     const tokens = new csrf_1.default();
     const secretForCustomer = yield tokens.secret();
     try {
-        yield customerModel_1.CustomerModel.create({ login, pass: yield bcrypt.hash(pass, 10), csrf: secretForCustomer });
+        const el = arrHexsFaces[Math.floor(Math.random() * arrHexsFaces.length - 1)];
+        console.log('el-', el);
+        yield customerModel_1.CustomerModel.create({
+            login,
+            userName,
+            homePage,
+            face: el,
+            pass: yield bcrypt.hash(pass, 10),
+            csrf: secretForCustomer
+        });
         yield mailer.sendMail({
             to: [login],
             from: HOST_EMAIL,
-            subject: `You  are registered on SPA todo-List`,
+            subject: `Hi ${userName} you  are registered on SPA todo-List`,
             text: `Lorem ipsum dolor sit amet.`,
             html: `<h1>Thanks very match!</h1>
                     <p> You created account with this email- ${login}</p>

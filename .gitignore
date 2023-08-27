@@ -2,4 +2,4 @@
 /node_modules/
 .idea
 dist
-const.dev.ts
+/src/const.dev.ts

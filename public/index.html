@@ -35,6 +35,8 @@
                 <div class="LoginInput">
                     <input v-model="login" type="text" placeholder="yaropolk@example.com" autofocus required>
                     <input v-model="pass" type="password" placeholder="******" autofocus required>
+                    <input v-model="userName" type="text" placeholder="user name">
+                    <input v-model="homePage" type="text" placeholder="homePage">
                 </div>
                 <div class="LoginButton">
                     <button @click="register">Зарегистрироваться</button>
@@ -42,14 +44,14 @@
                 </div>
         </div>
         <div class="wrapper" v-else-if="step === 'items'">
-            <h3>Добавить новую задачу:</h3>
+            <h3>Добавить новую запись:</h3>
             <label style="display: flex;">
                 <input @keyup.enter="addTask" class="new_todo" autofocus autocomplete="on"
                        placeholder="выгулять кота соседа"
                        type="text" v-model="new_task.text">
                 <span><button @click="addTask" class="button new_todo_button">Добавить</button></span>
             </label>
-            <h3 class="status_title">{{ 'Активные задачи: ' + tasks.length }}</h3>
+            <h3 class="status_title">{{ 'Все записи: ' + tasks.length }}</h3>
             <task @task_del="deleteTask(task.id)"
                   @task_edit="editTask(index)"
                   @task_done="markAsDone(index, task.id)"
@@ -62,6 +64,7 @@
 
             <hr>
             <button @click="logout" class="logout">Выйти &#128682;</button>
+            <button @click="getOnlyMyTasks" class="button my_coment_button">Только мои комментарии</button>
         </div>
         <div class="wrapper" v-else-if="step === 'error'">
             Произошла ошибка. Откройте консоль разработчика чтоб увидеть подробности.
@@ -79,12 +82,9 @@
                 <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
                 <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
               </button>
-              <span class="task_content" v-if="!data.editable">
-                    {{ index }}. {{ data.text }}
-                </span>
-              <span v-else>
-                    {{ index }}. <input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
-                                        class="edit-input"/>
+              <div class="task_face">{{String.fromCodePoint(data.face)}}</div>
+              <span class="task_head" >
+                   <strong>{{ data.userName }}</strong> {{ data.createdAt }}
                 </span>
             </div>
             <div class="button check" v-if="!data.editable">
@@ -96,6 +96,13 @@
               <button @click="$emit('disable')"> ✕</button>
             </div>
           </div>
+          <div class="task_content" v-if="!data.editable">
+            {{ data.text }}
+          </div>
+          <div v-else>
+            {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
+                               class="edit-input"/>
+            </div>
           </div>
         `
     });
@@ -110,6 +117,9 @@
             },
             tasks: [],
             login: '',
+            face: '',
+            userName: '',
+            homePage: '',
             _csrf: '',
             pass: '',
             backendLanguage: 'JS',
@@ -117,12 +127,47 @@
             apiVersion: 'v1',
             step: ''
         },
+
         computed: {
             backendSuffix() {
-                return this.backendLanguage === 'PHP' ? '.php' : '';
+                return this.backendLanguage = '';
             },
         },
         methods: {
+            getOnlyMyTasks: function () {
+                const route = this.apiVersion === 'v1' ? '/items' : '/router';
+                const qs = {action: this.apiVersion === 'v1' ? '' : 'getItems'};
+
+                fetch(this.apiURL + this.apiVersion + route + '/my' + this.backendSuffix + '?' + new URLSearchParams(qs), {
+                    credentials: 'include',
+                    method: this.apiVersion === 'v1' ? 'GET' : 'POST',
+                })
+                    .then(res => res.json())
+                    .then((response) => {
+                        if (response.error === 'forbidden') {
+                            this.step = 'login';
+                        } else {
+                            this.tasks = response.items;
+                            this.tasks.sort(function (oneCommit, secCommit) {
+                                return Date.parse(secCommit.createdAt) - Date.parse(oneCommit.createdAt);
+                            });
+                            this.tasks = this.tasks.map((item) => {
+                                item.editable = false;
+                                item.createdAt = Intl.DateTimeFormat('ru-RU', {
+                                    day: '2-digit',
+                                    month: 'long',
+                                    year: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                }).format(new Date(item.createdAt));
+                                return item;
+                            });
+                            this.step = 'items';
+                        }
+                    }).catch((error) => {
+                    this.step = 'error';
+                })
+            },
             getTasks: function () {
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? '' : 'getItems'};
@@ -136,10 +181,21 @@
                         if (response.error === 'forbidden') {
                             this.step = 'login';
                         } else {
-                            this.tasks = response.items.map((item) => {
+                            this.tasks = response.items;
+                            this.tasks.sort(function (oneCommit, secCommit) {
+                                return Date.parse(secCommit.createdAt) - Date.parse(oneCommit.createdAt);
+                            });
+                            this.tasks = this.tasks.map((item) => {
                                 item.editable = false;
+                                item.createdAt = Intl.DateTimeFormat('ru-RU', {
+                                    day: '2-digit',
+                                    month: 'long',
+                                    year: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                }).format(new Date(item.createdAt));
                                 return item;
-                            })
+                            });
                             this.step = 'items';
                         }
                     }).catch((error) => {
@@ -168,7 +224,7 @@
             },
             addTask: function () {
                 if (this.new_task.text.trim() !== '') {
-                    let request = JSON.stringify({text: this.new_task.text, _csrf:this._csrf});
+                    let request = JSON.stringify({text: this.new_task.text, _csrf: this._csrf});
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'createItem'};
                     fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
@@ -193,7 +249,8 @@
                 let request = JSON.stringify({
                     text: this.tasks[index].text,
                     id: id,
-                    checked: this.tasks[index].checked
+                    checked: this.tasks[index].checked,
+                    _csrf: this._csrf
                 });
                 /*{"text":"Djon!!!","id":1,"checked":true}*/
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
@@ -263,7 +320,6 @@
                         .then(response => {
                             if (response.ok) {
                                 this._csrf = response['_csrf'];
-                                console.log('this._csrf-', this._csrf);
                                 localStorage.setItem('name', this.login);
                                 this.getTasks();
                                 this.step = 'items';
@@ -276,8 +332,13 @@
                 }
             },
             register() {
-                if (this.login.trim() !== '' && this.pass.trim()) {
-                    let params = JSON.stringify({login: this.login, pass: this.pass});
+                if (this.login.trim() !== '' && this.pass.trim() && this.userName.trim() !== '') {
+                    let params = JSON.stringify({
+                        login: this.login,
+                        pass: this.pass,
+                        userName: this.userName,
+                        homePage: this.homePage,
+                    });
                     const route = this.apiVersion === 'v1' ? '/register' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'register'};
                     fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {

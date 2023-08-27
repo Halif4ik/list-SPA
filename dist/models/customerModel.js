@@ -12,6 +12,7 @@ exports.CustomerModel = database_1.sequelize.define('customer_list', {
     },
     login: {
         allowNull: false,
+        unique: true,
         type: sequelize_1.DataTypes.STRING
     },
     pass: {
@@ -21,6 +22,18 @@ exports.CustomerModel = database_1.sequelize.define('customer_list', {
     csrf: {
         allowNull: false,
         type: sequelize_1.DataTypes.STRING
+    },
+    userName: {
+        allowNull: false,
+        type: sequelize_1.DataTypes.STRING
+    },
+    homePage: {
+        allowNull: true,
+        type: sequelize_1.DataTypes.STRING
+    },
+    face: {
+        allowNull: true,
+        type: sequelize_1.DataTypes.INTEGER
     },
 });
 //# sourceMappingURL=customerModel.js.map

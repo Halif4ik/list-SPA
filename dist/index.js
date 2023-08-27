@@ -18,19 +18,20 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const api_V1_route_1 = require("./routes/api_V1_route");
 const api_V1_login_1 = require("./routes/api_V1_login");
 const database_1 = require("./utils/database");
-const session = require('express-session');
+const express_session_1 = __importDefault(require("express-session"));
 const port = process.env.PORT || 3001;
 const exprApp = (0, express_1.default)();
 exprApp.use(express_1.default.static(node_path_1.default.join(__dirname, '../public')));
 exprApp.use('/uploads', express_1.default.static(node_path_1.default.join(__dirname, '../uploads')));
-exprApp.use(express_1.urlencoded({extended: true}));
-const SequelizeStore = require('connect-session-sequelize')(session.Store);
+/*exprApp.use(express.urlencoded({extended: true}))  const SequelizeStore = require('connect-session-sequelize')(connect.session.Store);*/
+exprApp.use((0, body_parser_1.default)({}));
+const SequelizeStore = require('connect-session-sequelize')(express_session_1.default.Store);
 const sessionStore = new SequelizeStore({
     db: database_1.sequelize,
     checkExpirationInterval: 15 * 60 * 1000,
     expiration: 7 * 24 * 60 * 60 * 1000 // 1 week
 });
-exprApp.use(session({
+exprApp.use((0, express_session_1.default)({
     secret: 'some secret word',
     resave: false,
     saveUninitialized: false,

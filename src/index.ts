@@ -4,8 +4,17 @@ import bodyParser from "body-parser";
 import {apiV1Route} from "./routes/api_V1_route";
 import {apiV1LoginRegisRoute} from "./routes/api_V1_login";
 import {sequelize} from './utils/database';
-import connect from 'connect';
-const session = require('express-session');
+import {Model} from "sequelize";
+import session from 'express-session';
+import PAGE_PAGINATION from './constants';
+declare module 'express-session' {
+    export interface SessionData {
+        customer: Model<any,any>[];
+        isAuthenticated: boolean;
+        secretForCustomer: string;
+        face: string;
+    }
+}
 const port = process.env.PORT || 3001
 const exprApp = express()
 

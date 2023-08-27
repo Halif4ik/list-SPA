@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkValidationInMiddleWare = exports.passwordValidInBodyMiddleware = exports.emailValidMiddleware = exports.textValidMiddleware = exports.idValid = void 0;
+exports.checkValidationInMiddleWare = exports.passwordValidInBodyMiddleware = exports.emailValidMiddleware = exports.homePValid = exports.textValidMiddleware = exports.idValid = void 0;
 const express_validator_1 = require("express-validator");
 function idValid() {
     return (0, express_validator_1.body)('id').trim().isLength({ min: 1, max: 50 }).isNumeric().withMessage("Id should be Number");
@@ -10,6 +10,10 @@ function textValidMiddleware() {
     return (0, express_validator_1.body)('text').trim().isLength({ min: 3, max: 50 }).escape().withMessage("Length text field should be 3-50");
 }
 exports.textValidMiddleware = textValidMiddleware;
+function homePValid() {
+    return (0, express_validator_1.body)('homePage').isURL().withMessage("Home page field should be URl format");
+}
+exports.homePValid = homePValid;
 function emailValidMiddleware() {
     return (0, express_validator_1.body)('login').isEmail().withMessage("Email should be email");
 }

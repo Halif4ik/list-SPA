@@ -7,6 +7,9 @@ export function idValid() {
 export function textValidMiddleware() {
     return body('text').trim().isLength({min: 3, max: 50}).escape().withMessage("Length text field should be 3-50");
 }
+export function homePValid() {
+    return body('homePage').isURL().withMessage("Home page field should be URl format");
+}
 
 export function emailValidMiddleware() {
     return body('login').isEmail().withMessage("Email should be email");

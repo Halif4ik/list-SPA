@@ -26,5 +26,13 @@ exports.todoModel = database_1.sequelize.define('TodoList', {
         allowNull: false,
         type: sequelize_1.DataTypes.STRING
     },
+    userName: {
+        allowNull: false,
+        type: sequelize_1.DataTypes.STRING
+    },
+    face: {
+        allowNull: true,
+        type: sequelize_1.DataTypes.INTEGER
+    },
 });
 //# sourceMappingURL=todoModel.js.map

@@ -92,6 +92,13 @@ h3 {
     text-align: center;
     color: white;
 }
+.my_coment_button {
+    width: fit-content%;
+    padding: 6px;
+    background-color: rgba(255, 181, 60, 0.9);
+    text-align: center;
+    color: white;
+}
 
 main {
     width: 772px;
@@ -101,6 +108,7 @@ main {
 .task {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     padding: 2px 5px;
     border: 2px solid rgba(0, 0, 0, .08);
     margin-top: 10px;
@@ -111,10 +119,32 @@ main {
     text-decoration: line-through;
 }
 
+.task_content {
+    width: 100%;
+}
+.task_face {
+    display: inline-block;
+    line-height: 24px;
+    position: relative;
+    z-index: 0;
+    height: 22px;
+    min-width: 22px;
+    cursor: pointer;
+    border: 3px solid white;
+    border-radius: 50%;
+    padding: 0.25rem;
+    font-family: Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,Android Emoji,EmojiSymbols,EmojiOne Mozilla,Twemoji Mozilla,Segoe UI Symbol,Noto Color Emoji Compat,emoji,var(--font-noto-emojipedia-fallback);
+    font-size: 25px;
+}
+
+
 button {
     cursor: pointer;
     padding-left: 3px;
     padding-right: 3px;
+}
+.button.check {
+  display: flex;
 }
 
 .status h3 {
@@ -124,6 +154,8 @@ button {
 .contentText {
     display: flex;
     flex-direction: row;
+    background-color: rgb(245,246,247);
+    width: 100%;
 }
 
 .User {
