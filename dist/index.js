@@ -23,7 +23,7 @@ const port = process.env.PORT || 3001;
 const exprApp = (0, express_1.default)();
 exprApp.use(express_1.default.static(node_path_1.default.join(__dirname, '../public')));
 exprApp.use('/uploads', express_1.default.static(node_path_1.default.join(__dirname, '../uploads')));
-/*exprApp.use(express.urlencoded({extended: true}))  const SequelizeStore = require('connect-session-sequelize')(connect.session.Store);*/
+/*exprApp.use(express.urlencoded({extended: true}))*/
 exprApp.use((0, body_parser_1.default)({}));
 const SequelizeStore = require('connect-session-sequelize')(express_session_1.default.Store);
 const sessionStore = new SequelizeStore({
@@ -46,7 +46,7 @@ function start() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             /*if (await sequelize.authenticate()) console.log('Connection has been established successfully.')*/
-            yield database_1.sequelize.sync({ force: true });
+            yield database_1.sequelize.sync({ force: false });
             exprApp.listen(port);
         }
         catch (e) {

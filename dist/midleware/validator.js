@@ -7,7 +7,7 @@ function idValid() {
 }
 exports.idValid = idValid;
 function textValidMiddleware() {
-    return (0, express_validator_1.body)('text').trim().isLength({ min: 3, max: 50 }).escape().withMessage("Length text field should be 3-50");
+    return (0, express_validator_1.body)('text').trim().isLength({ min: 2, max: 500 }).escape().withMessage("Count characters  should be 2-500");
 }
 exports.textValidMiddleware = textValidMiddleware;
 function homePValid() {

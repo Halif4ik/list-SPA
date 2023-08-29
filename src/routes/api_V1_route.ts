@@ -2,15 +2,46 @@ import {Request, Response, Router} from "express";
 import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
 import {isCorrectToken} from "../midleware/iscorectToken";
 import {TodoInstance, todoModel} from "../models/todoModel";
+import Tokens from "csrf";
+import {Op} from "sequelize";
+
+const {PAGE_PAGINATION} = require('../constants');
 
 export const apiV1Route = Router({});
-let ID = 1;
+let countAllItemsInTodoList = 0;
+
 /*getAll*/
 apiV1Route.get('/', async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
+    const tokens: Tokens = new Tokens();
+    let tokenSentToFront;
+    const secret: string | undefined = req.session.secretForCustomer;
+    if (secret) tokenSentToFront = await tokens.create(secret);
+
+    let reqCurrentPage: string | any = req.query.action;
+    if (typeof reqCurrentPage !== 'string') reqCurrentPage = '1'
+
     try {
-        const allTodos = await todoModel.findAll();
-        res.send({items: allTodos});
+        /*calculating all*/
+        const amountAll = await todoModel.count({
+            where: {
+                id: {
+                    [Op.gt]: 0
+                }
+            }
+        });
+        countAllItemsInTodoList = amountAll;
+
+        let offset = amountAll - (parseInt(reqCurrentPage) * 4);
+        let limit =  offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
+        offset =  offset < 0 ? 0 : offset;
+
+        const rows = await todoModel.findAll({
+            limit: limit,
+            offset: offset,
+        });
+
+        res.send({items: rows, '_csrf': tokenSentToFront, amountPage:Math.ceil(amountAll/PAGE_PAGINATION)});
     } catch (e) {
         console.log(e);
         res.sendStatus(404)
@@ -31,21 +62,24 @@ apiV1Route.get('/my', async (req: Request, res: Response) => {
         res.sendStatus(404)
     }
 });
-/*create new task*/
+/*create new Post*/
 apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
     }
+    console.log('!!!apiV1Route-')
     try {
         const todoItem: TodoInstance = todoModel.build({
-            id: ID++,
+            id: ++countAllItemsInTodoList,
             checked: req.body.done === 'true',
             text: req.body.text,
             login: req.session.customer[0].login
             userName: req.session.customer[0].userName
             face: req.session.customer[0].face
         });
+        console.log('!!!!!!!todoItem-', todoItem);
+
         await todoItem.save();
         res.status(201).send(todoItem);
     } catch (e) {
@@ -55,7 +89,7 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
 });
 
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
-apiV1Route.put('/',isCorrectToken, textValidMiddleware(), idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+apiV1Route.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const postIsChanging: TodoInstance | null = await todoModel.findByPk(+req.body.id);
         /*ckeking if curent user make changing*/

@@ -29,7 +29,6 @@ const mailer = nodemailer.createTransport(sgTransport({
     }
 }));
 let arrHexsFaces = ['👩‍🦰'.codePointAt(0), '👨‍🦲'.codePointAt(0), '👲'.codePointAt(0), `👧`.codePointAt(0)];
-console.log(arrHexsFaces);
 /*Login*/
 exports.apiV1LoginRegisRoute.post('/login', (0, validator_1.emailValidMiddleware)(), (0, validator_1.passwordValidInBodyMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -107,8 +106,7 @@ exports.apiV1LoginRegisRoute.post('/register', (0, validator_1.emailValidMiddlew
     const tokens = new csrf_1.default();
     const secretForCustomer = yield tokens.secret();
     try {
-        const el = arrHexsFaces[Math.floor(Math.random() * arrHexsFaces.length - 1)];
-        console.log('el-', el);
+        const el = arrHexsFaces[Math.floor(Math.random() * (arrHexsFaces.length - 1))];
         yield customerModel_1.CustomerModel.create({
             login,
             userName,

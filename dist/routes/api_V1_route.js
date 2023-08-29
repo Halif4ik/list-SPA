@@ -8,21 +8,50 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.apiV1Route = void 0;
 const express_1 = require("express");
 const validator_1 = require("../midleware/validator");
 const iscorectToken_1 = require("../midleware/iscorectToken");
 const todoModel_1 = require("../models/todoModel");
+const csrf_1 = __importDefault(require("csrf"));
+const sequelize_1 = require("sequelize");
+const { PAGE_PAGINATION } = require('../constants');
 exports.apiV1Route = (0, express_1.Router)({});
-let ID = 1;
+let countAllItemsInTodoList = 0;
 /*getAll*/
 exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.session.isAuthenticated)
         return res.send({ error: 'forbidden' });
+    const tokens = new csrf_1.default();
+    let tokenSentToFront;
+    const secret = req.session.secretForCustomer;
+    if (secret)
+        tokenSentToFront = yield tokens.create(secret);
+    let reqCurrentPage = req.query.action;
+    if (typeof reqCurrentPage !== 'string')
+        reqCurrentPage = '1';
     try {
-        const allTodos = yield todoModel_1.todoModel.findAll();
-        res.send({ items: allTodos });
+        /*calculating all*/
+        const amountAll = yield todoModel_1.todoModel.count({
+            where: {
+                id: {
+                    [sequelize_1.Op.gt]: 0
+                }
+            }
+        });
+        countAllItemsInTodoList = amountAll;
+        let offset = amountAll - (parseInt(reqCurrentPage) * 4);
+        let limit = offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
+        offset = offset < 0 ? 0 : offset;
+        const rows = yield todoModel_1.todoModel.findAll({
+            limit: limit,
+            offset: offset,
+        });
+        res.send({ items: rows, '_csrf': tokenSentToFront, amountPage: Math.ceil(amountAll / PAGE_PAGINATION) });
     }
     catch (e) {
         console.log(e);
@@ -46,21 +75,23 @@ exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, fu
         res.sendStatus(404);
     }
 }));
-/*create new task*/
+/*create new Post*/
 exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({ error: 'forbidden' });
     }
+    console.log('!!!apiV1Route-');
     try {
         const todoItem = todoModel_1.todoModel.build({
-            id: ID++,
+            id: ++countAllItemsInTodoList,
             checked: req.body.done === 'true',
             text: req.body.text,
             login: req.session.customer[0].login,
             userName: req.session.customer[0].userName,
             face: req.session.customer[0].face
         });
+        console.log('!!!!!!!todoItem-', todoItem);
         yield todoItem.save();
         res.status(201).send(todoItem);
     }

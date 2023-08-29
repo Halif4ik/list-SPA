@@ -6,7 +6,6 @@ import {apiV1LoginRegisRoute} from "./routes/api_V1_login";
 import {sequelize} from './utils/database';
 import {Model} from "sequelize";
 import session from 'express-session';
-import PAGE_PAGINATION from './constants';
 declare module 'express-session' {
     export interface SessionData {
         customer: Model<any,any>[];
@@ -21,7 +20,7 @@ const exprApp = express()
 exprApp.use(express.static(path.join(__dirname, '../public')))
 exprApp.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 
-/*exprApp.use(express.urlencoded({extended: true}))  const SequelizeStore = require('connect-session-sequelize')(connect.session.Store);*/
+/*exprApp.use(express.urlencoded({extended: true}))*/
 exprApp.use(bodyParser({}));
 
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
@@ -46,7 +45,7 @@ exprApp.use((req: Request, res: Response) => {
 async function start() {
     try {
         /*if (await sequelize.authenticate()) console.log('Connection has been established successfully.')*/
-        await sequelize.sync({ force: true });
+        await sequelize.sync({ force: false });
         exprApp.listen(port)
     } catch (e) {
         console.log(e);

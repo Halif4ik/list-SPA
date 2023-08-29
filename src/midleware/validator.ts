@@ -5,7 +5,7 @@ export function idValid() {
     return body('id').trim().isLength({min:1, max: 50}).isNumeric().withMessage("Id should be Number");
 }
 export function textValidMiddleware() {
-    return body('text').trim().isLength({min: 3, max: 50}).escape().withMessage("Length text field should be 3-50");
+    return body('text').trim().isLength({min: 2, max: 500}).escape().withMessage("Count characters  should be 2-500");
 }
 export function homePValid() {
     return body('homePage').isURL().withMessage("Home page field should be URl format");

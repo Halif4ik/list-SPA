@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Задачник</title>
+    <title>List messages</title>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <div id="app">
     <header class="header">
-        <h1 class="logo"><span style="color: rgba(255,181,60,0.9)">dZENcode</span></h1>
+        <h1 class="logo"><span style="color: rgba(255,181,60,0.9)">TestCode</span></h1>
     </header>
     <main>
         <div class="settings">
@@ -47,7 +47,7 @@
             <h3>Добавить новую запись:</h3>
             <label style="display: flex;">
                 <input @keyup.enter="addTask" class="new_todo" autofocus autocomplete="on"
-                       placeholder="выгулять кота соседа"
+                       placeholder="Хто выгуливает кота?"
                        type="text" v-model="new_task.text">
                 <span><button @click="addTask" class="button new_todo_button">Добавить</button></span>
             </label>
@@ -57,14 +57,19 @@
                   @task_done="markAsDone(index, task.id)"
                   @save="save(index, task.id)"
                   @disable="disable(index)"
+                  @get_my_tasks="getOnlyMyTasks()"
                   :data="task"
                   :index="index+1"
+                  :login="userName"
                   v-for="(task, index) in tasks"
                   :key="index"></task>
 
+            <div class="wrapper pagination">
+                <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx}} </button>
+            </div>
+
             <hr>
             <button @click="logout" class="logout">Выйти &#128682;</button>
-            <button @click="getOnlyMyTasks" class="button my_coment_button">Только мои комментарии</button>
         </div>
         <div class="wrapper" v-else-if="step === 'error'">
             Произошла ошибка. Откройте консоль разработчика чтоб увидеть подробности.
@@ -73,7 +78,7 @@
 </div>
 <script>
     Vue.component("task", {
-        props: ["data", "index"],
+        props: ["data", "index", "login"],
         template: `
           <div class="task" v-bind:class="{ taskCompleted: data.checked}">
           <div class="contentText">
@@ -82,14 +87,16 @@
                 <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
                 <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
               </button>
-              <div class="task_face">{{String.fromCodePoint(data.face)}}</div>
-              <span class="task_head" >
+              <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
+              <span class="task_head">
                    <strong>{{ data.userName }}</strong> {{ data.createdAt }}
                 </span>
             </div>
+
             <div class="button check" v-if="!data.editable">
               <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
               <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
+              <button v-if="data.userName" @click="$emit('get_my_tasks')" style="color: #15cd2e;">🔎</button>
             </div>
             <div v-else>
               <button @click="$emit('save')"> 💾</button>
@@ -102,7 +109,7 @@
           <div v-else>
             {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
                                class="edit-input"/>
-            </div>
+          </div>
           </div>
         `
     });
@@ -118,6 +125,7 @@
             tasks: [],
             login: '',
             face: '',
+            pages: '',
             userName: '',
             homePage: '',
             _csrf: '',
@@ -147,8 +155,7 @@
                         if (response.error === 'forbidden') {
                             this.step = 'login';
                         } else {
-                            this.tasks = response.items;
-                            this.tasks.sort(function (oneCommit, secCommit) {
+                            this.tasks = response.items.sort(function (oneCommit, secCommit) {
                                 return Date.parse(secCommit.createdAt) - Date.parse(oneCommit.createdAt);
                             });
                             this.tasks = this.tasks.map((item) => {
@@ -168,10 +175,10 @@
                     this.step = 'error';
                 })
             },
-            getTasks: function () {
+            getTasks: function (numberPage = 1) {
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
-                const qs = {action: this.apiVersion === 'v1' ? '' : 'getItems'};
-
+                const qs = {action: this.apiVersion === 'v1' ? numberPage : 'getItems'};
+                /*http://localhost:3001/api/v1/items?action=1*/
                 fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
                     credentials: 'include',
                     method: this.apiVersion === 'v1' ? 'GET' : 'POST',
@@ -181,10 +188,13 @@
                         if (response.error === 'forbidden') {
                             this.step = 'login';
                         } else {
-                            this.tasks = response.items;
-                            this.tasks.sort(function (oneCommit, secCommit) {
+                            this._csrf = response['_csrf'];
+                            this.pages = parseInt(response['amountPage']) || 0;
+                            /*sorting*/
+                            this.tasks = response.items.sort(function (oneCommit, secCommit) {
                                 return Date.parse(secCommit.createdAt) - Date.parse(oneCommit.createdAt);
                             });
+                            /*formatting time*/
                             this.tasks = this.tasks.map((item) => {
                                 item.editable = false;
                                 item.createdAt = Intl.DateTimeFormat('ru-RU', {
@@ -196,6 +206,7 @@
                                 }).format(new Date(item.createdAt));
                                 return item;
                             });
+
                             this.step = 'items';
                         }
                     }).catch((error) => {
@@ -305,7 +316,6 @@
             logIn() {
                 if (this.login.trim() !== '' && this.pass.trim()) {
                     let params = JSON.stringify({login: this.login, pass: this.pass});
-
                     const route = this.apiVersion === 'v1' ? '/login' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'login'};
                     fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
