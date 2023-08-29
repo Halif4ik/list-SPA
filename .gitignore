@@ -1,5 +1,5 @@
 # Project exclude paths
 /node_modules/
-dist
 .idea
+dist
 /src/const.dev.ts
