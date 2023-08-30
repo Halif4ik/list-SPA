@@ -16,7 +16,7 @@ exports.apiV1Route = void 0;
 const express_1 = require("express");
 const validator_1 = require("../midleware/validator");
 const iscorectToken_1 = require("../midleware/iscorectToken");
-const todoModel_1 = require("../models/todoModel");
+const postsModel_1 = require("../models/postsModel");
 const csrf_1 = __importDefault(require("csrf"));
 const sequelize_1 = require("sequelize");
 const { PAGE_PAGINATION } = require('../constants');
@@ -36,7 +36,7 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
         reqCurrentPage = '1';
     try {
         /*calculating all*/
-        const amountAll = yield todoModel_1.todoModel.count({
+        const amountAll = yield postsModel_1.postsModel.count({
             where: {
                 id: {
                     [sequelize_1.Op.gt]: 0
@@ -44,10 +44,10 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
             }
         });
         countAllItemsInTodoList = amountAll;
-        let offset = amountAll - (parseInt(reqCurrentPage) * 4);
+        let offset = amountAll - (parseInt(reqCurrentPage) * PAGE_PAGINATION);
         let limit = offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
         offset = offset < 0 ? 0 : offset;
-        const rows = yield todoModel_1.todoModel.findAll({
+        const rows = yield postsModel_1.postsModel.findAll({
             limit: limit,
             offset: offset,
         });
@@ -63,7 +63,7 @@ exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, fu
     if (!req.session.isAuthenticated)
         return res.send({ error: 'forbidden' });
     try {
-        const allTodos = yield todoModel_1.todoModel.findAll({
+        const allTodos = yield postsModel_1.postsModel.findAll({
             where: {
                 login: req.session.customer[0].login
             },
@@ -83,7 +83,7 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
     }
     console.log('!!!apiV1Route-');
     try {
-        const todoItem = todoModel_1.todoModel.build({
+        const todoItem = postsModel_1.postsModel.build({
             id: ++countAllItemsInTodoList,
             checked: req.body.done === 'true',
             text: req.body.text,
@@ -103,7 +103,7 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
 exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const postIsChanging = yield todoModel_1.todoModel.findByPk(+req.body.id);
+        const postIsChanging = yield postsModel_1.postsModel.findByPk(+req.body.id);
         /*ckeking if curent user make changing*/
         if (postIsChanging && postIsChanging.login === req.session.customer[0].login) {
             postIsChanging.text = req.body.text;
@@ -124,7 +124,7 @@ exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.text
 exports.apiV1Route.delete('/', (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const deleteTodoItem = yield todoModel_1.todoModel.findAll({
+        const deleteTodoItem = yield postsModel_1.postsModel.findAll({
             where: {
                 id: +req.body.id
             }

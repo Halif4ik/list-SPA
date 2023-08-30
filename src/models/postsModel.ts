@@ -1,5 +1,6 @@
 import {BuildOptions, DataTypes, Model} from 'sequelize'
 import {sequelize} from '../utils/database';
+import {comentModel} from "./comentsOfPost";
 
 export interface ItodoModel {
     id: number;
@@ -17,12 +18,12 @@ export interface TodoInstance extends Model<ItodoModel>, ItodoModel {
 export type TodoModelStatic = typeof Model & {
     new(values?: object, options?: BuildOptions): TodoInstance;
 };
-export const todoModel: TodoModelStatic = sequelize.define('TodoList', {
+export const postsModel: TodoModelStatic = sequelize.define('TodoList', {
     id: {
         primaryKey: true,
         autoIncrement: true,
         allowNull: false,
-        type: DataTypes.INTEGER
+        type: DataTypes.SMALLINT.UNSIGNED
     },
     checked: {
         allowNull: false,
@@ -46,6 +47,13 @@ export const todoModel: TodoModelStatic = sequelize.define('TodoList', {
     },
     face: {
         allowNull: true,
-        type: DataTypes.INTEGER
+        type: DataTypes.INTEGER.UNSIGNED
+    },
+    uuid: {
+        allowNull: false,
+        unique:true,
+        type: DataTypes.STRING
     },
 }) as TodoModelStatic
+
+comentModel.belongsTo(postsModel);

@@ -34,9 +34,9 @@
             <h3>Доступ к учетной записи</h1>
                 <div class="LoginInput">
                     <input v-model="login" type="text" placeholder="yaropolk@example.com" autofocus required>
-                    <input v-model="pass" type="password" placeholder="******" autofocus required>
-                    <input v-model="userName" type="text" placeholder="user name">
-                    <input v-model="homePage" type="text" placeholder="homePage">
+                    <input v-model="pass" type="password" placeholder="******" required>
+                    <input v-model="userName" type="text" placeholder="user name" autocomplete="on">
+                    <input v-model="homePage" type="text" placeholder="homePage" autocomplete="on">
                 </div>
                 <div class="LoginButton">
                     <button @click="register">Зарегистрироваться</button>

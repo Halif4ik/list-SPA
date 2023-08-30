@@ -24,7 +24,7 @@ export const CustomerModel: CustomerModelStatic = sequelize.define('customer_lis
         primaryKey: true,
         autoIncrement: true,
         allowNull: false,
-        type: DataTypes.INTEGER
+        type: DataTypes.TINYINT.UNSIGNED
     },
     login: {
         allowNull: false,
