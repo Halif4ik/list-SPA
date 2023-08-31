@@ -6,16 +6,17 @@ import {apiV1LoginRegisRoute} from "./routes/api_V1_login";
 import {sequelize} from './utils/database';
 import {Model} from "sequelize";
 import session from 'express-session';
+
 declare module 'express-session' {
     export interface SessionData {
-        customer: Model<any,any>[];
+        customer: Model<any, any>[];
         isAuthenticated: boolean;
         secretForCustomer: string;
         face: string;
     }
 }
 const port = process.env.PORT || 3001
-const exprApp = express()
+const exprApp: Express = express()
 
 exprApp.use(express.static(path.join(__dirname, '../public')))
 exprApp.use('/uploads', express.static(path.join(__dirname, '../uploads')))
@@ -42,10 +43,10 @@ exprApp.use((req: Request, res: Response) => {
     res.sendFile('/index.html');
 });
 
-async function start() {
+async function start():Promise<void> {
     try {
         /*if (await sequelize.authenticate()) console.log('Connection has been established successfully.')*/
-        await sequelize.sync({ force: false });
+        await sequelize.sync({force: false});
         exprApp.listen(port)
     } catch (e) {
         console.log(e);

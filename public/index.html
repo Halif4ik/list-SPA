@@ -45,12 +45,23 @@
         </div>
         <div class="wrapper" v-else-if="step === 'items'">
             <h3>Добавить новую запись:</h3>
-            <label style="display: flex;">
-                <input @keyup.enter="addTask" class="new_todo" autofocus autocomplete="on"
-                       placeholder="Хто выгуливает кота?"
-                       type="text" v-model="new_task.text">
-                <span><button @click="addTask" class="button new_todo_button">Добавить</button></span>
-            </label>
+            <div v-if="posting">
+                <label style="display: flex;">
+                    <input @keyup.enter="addTask" class="new_todo" autofocus autocomplete="off"
+                           placeholder="Create new post"
+                           type="text" v-model="new_task.text">
+                    <span><button @click="addTask" class="button new_todo_button">Постить</button></span>
+                </label>
+            </div>
+            <div v-else>
+                <label style="display: flex;">
+                    <input @keyup.enter="addCommit" class="new_todo" value=""
+                           placeholder="Create comment for checked post"
+                           type="text" v-model="new_comit">
+                    <span><button @click="addCommit" class="button new_todo_button">Коментить</button></span>
+                </label>
+            </div>
+
             <h3 class="status_title">{{ 'Все записи: ' + tasks.length }}</h3>
             <task @task_del="deleteTask(task.id)"
                   @task_edit="editTask(index)"
@@ -65,7 +76,7 @@
                   :key="index"></task>
 
             <div class="wrapper pagination">
-                <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx}} </button>
+                <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx }}</button>
             </div>
 
             <hr>
@@ -81,35 +92,34 @@
         props: ["data", "index", "login"],
         template: `
           <div class="task" v-bind:class="{ taskCompleted: data.checked}">
-          <div class="contentText">
-            <div>
-              <button @click="$emit('task_done')" class="task_done taskButton">
-                <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
-                <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
-              </button>
-              <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
-              <span class="task_head">
+            <div class="contentText">
+              <div>
+                <button @click="$emit('task_done')" class="task_done taskButton">
+                  <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
+                  <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
+                </button>
+                <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
+                <span class="task_head">
                    <strong>{{ data.userName }}</strong> {{ data.createdAt }}
                 </span>
+              </div>
+              <div class="button check" v-if="!data.editable">
+                <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
+                <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
+                <button v-if="data.userName" @click="$emit('get_my_tasks')" style="color: #15cd2e;">🔎</button>
+              </div>
+              <div v-else>
+                <button @click="$emit('save')"> 💾</button>
+                <button @click="$emit('disable')"> ✕</button>
+              </div>
             </div>
-
-            <div class="button check" v-if="!data.editable">
-              <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
-              <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
-              <button v-if="data.userName" @click="$emit('get_my_tasks')" style="color: #15cd2e;">🔎</button>
+            <div class="task_content" v-if="!data.editable">
+              {{ data.text }}
             </div>
             <div v-else>
-              <button @click="$emit('save')"> 💾</button>
-              <button @click="$emit('disable')"> ✕</button>
+              {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
+                                 class="edit-input"/>
             </div>
-          </div>
-          <div class="task_content" v-if="!data.editable">
-            {{ data.text }}
-          </div>
-          <div v-else>
-            {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
-                               class="edit-input"/>
-          </div>
           </div>
         `
     });
@@ -122,6 +132,10 @@
                 editable: false,
                 checked: false
             },
+            new_comit: {
+                text: '',
+                editable: false,
+            },
             tasks: [],
             login: '',
             face: '',
@@ -133,7 +147,8 @@
             backendLanguage: 'JS',
             apiURL: 'http://localhost:3001/api/',
             apiVersion: 'v1',
-            step: ''
+            step: '',
+            posting: true
         },
 
         computed: {
@@ -233,6 +248,7 @@
                         }
                     });
             },
+
             addTask: function () {
                 if (this.new_task.text.trim() !== '') {
                     let request = JSON.stringify({text: this.new_task.text, _csrf: this._csrf});
@@ -256,6 +272,30 @@
                         });
                 }
             },
+            addCommit: function (index, id) {
+                let request = JSON.stringify({
+                    text: this.tasks[index].text,
+                    parentPostId: id,
+                    _csrf: this._csrf
+                });
+                /*{"text":"Djon!!!","id":1,"checked":true}*/
+                const route = this.apiVersion === 'v1' ? '/items' : '/router';
+                const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
+                fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
+                    method: this.apiVersion === 'v1' ? 'POST' : 'POST',
+                    body: request,
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                })
+                    .then(res => res.json())
+                    .then(() => {
+                        this.posting = true;
+                        this.getTasks()
+                    });
+            },
+
             updateTask: function (index, id) {
                 let request = JSON.stringify({
                     text: this.tasks[index].text,
@@ -280,6 +320,7 @@
                     });
             },
             markAsDone(index, id) {
+                this.posting = !this.posting;
                 this.$set(this.tasks[index], 'checked', !this.tasks[index].checked)
                 this.checked = this.tasks[index].checked;
                 this.updateTask(index, id)

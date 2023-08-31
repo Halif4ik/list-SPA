@@ -16,8 +16,6 @@ export type ComentModelStatic = typeof Model & {
 };
 export const comentModel: ComentModelStatic = sequelize.define('ComentsList', {
     id: {
-        primaryKey: true,
-        allowNull: false,
         autoIncrement: true,
         type: DataTypes.SMALLINT.UNSIGNED
     },

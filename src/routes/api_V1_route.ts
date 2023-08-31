@@ -4,6 +4,7 @@ import {isCorrectToken} from "../midleware/iscorectToken";
 import {TodoInstance, postsModel,comentModel} from "../models/postsModel";
 import Tokens from "csrf";
 import {Op} from "sequelize";
+import {ComentsInstance} from "../models/comentsOfPost";
 
 const {PAGE_PAGINATION} = require('../constants');
 
@@ -18,13 +19,9 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
     }
     console.log('!!!apiV1Route-')
     try {
-        const todoItem: TodoInstance = postsModel.build({
-            id: ++countAllItemsInTodoList,
-            checked: req.body.done === 'true',
+        const todoItem: ComentsInstance = comentModel.build({
             text: req.body.text,
             login: req.session.customer[0].login
-            userName: req.session.customer[0].userName
-            face: req.session.customer[0].face
         });
         console.log('!!!!!!!todoItem-', todoItem);
 

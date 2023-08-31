@@ -15,10 +15,10 @@ export interface ItodoModel {
 export interface TodoInstance extends Model<ItodoModel>, ItodoModel {
 }
 
-export type TodoModelStatic = typeof Model & {
+export type PostsModelStatic = typeof Model & {
     new(values?: object, options?: BuildOptions): TodoInstance;
 };
-export const postsModel: TodoModelStatic = sequelize.define('TodoList', {
+export const postsModel: PostsModelStatic = sequelize.define('TodoList', {
     id: {
         primaryKey: true,
         autoIncrement: true,
@@ -54,6 +54,6 @@ export const postsModel: TodoModelStatic = sequelize.define('TodoList', {
         unique:true,
         type: DataTypes.STRING
     },
-}) as TodoModelStatic
+}) as PostsModelStatic
 
 comentModel.belongsTo(postsModel);
