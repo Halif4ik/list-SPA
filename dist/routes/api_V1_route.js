@@ -17,7 +17,7 @@ const express_1 = require("express");
 const validator_1 = require("../midleware/validator");
 const iscorectToken_1 = require("../midleware/iscorectToken");
 const postsModel_1 = require("../models/postsModel");
-const comentsOfPost_1 = require("../models/comentsOfPost");
+const comentsOfPost_1 = __importDefault(require("../models/comentsOfPost"));
 const csrf_1 = __importDefault(require("csrf"));
 const uuidv4_1 = require("uuidv4");
 const sequelize_1 = require("sequelize");
@@ -33,7 +33,7 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
     }
     try {
         /*hook*/
-        const amountAll = yield comentsOfPost_1.commitModel.count({
+        const amountAll = yield comentsOfPost_1.default.count({
             where: {
                 id: {
                     [sequelize_1.Op.gt]: 0
@@ -41,7 +41,7 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
             }
         });
         countAllComents = amountAll;
-        const commitItem = yield comentsOfPost_1.commitModel.create({
+        const commitItem = yield comentsOfPost_1.default.create({
             id: ++countAllComents,
             text: req.body.text,
             parentUuid: req.body.parentUuid
@@ -82,6 +82,8 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
             limit: limit,
             offset: offset,
         });
+        /*get commit*/
+        console.log('rows0000-', rows[0].dataValues.uuid);
         res.send({
             items: rows,
             loginOfCurrentUser: req.session.customer[0].login,

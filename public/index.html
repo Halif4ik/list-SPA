@@ -39,7 +39,7 @@
             <h5>Доступ к учетной записи</h5>
             <div class="LoginInput">
                 <input v-model.lazy="login" :class="emailValid ? 'validate':'validate invalid'" type="email"
-                       :placeholder="eplaceHolder" autofocus required>
+                       :placeholder="ePlaceHolder" autofocus required>
                 <span class="errorMsg" v-if="!this.emailValid">Incorrect format E-mail</span>
                 <input v-model.lazy="pass" class="validate" type="password" placeholder="******" required minlength="6"
                        maxlength="20">
@@ -85,7 +85,13 @@
                   v-bind:index="index+1"
                   v-for="(task, index) in tasks"
                   :login="currentLogin"
-                  :key="index"></task>
+                  :key="index">
+                <comit @task_del="deleteTask(task.id)" :data="task" v-bind:index="index+1"
+                       v-for="(task, index) in tasks"
+                       :key="index">
+
+                </comit>
+            </task>
 
             <div class="wrapper pagination" v-if="pages > 1">
                 <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx }}</button>
@@ -127,12 +133,9 @@
               </div>
             </div>
           </div>
-          <div class="task_content" v-if="!data.editable">
-            {{ data.text }}
-          </div>
+          <div class="task_content" v-if="!data.editable"> {{ data.text }}</div>
           <div v-else>
-            {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
-                               class="edit-input"/>
+            {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus class="edit-input"/>
           </div>
           </div>
         `
@@ -165,7 +168,7 @@
             step: '',
             posting: true,
             checkedTask: '',
-            eplaceHolder: 'yaropolk@example.com',
+            ePlaceHolder: 'yaropolk@example.com',
             emailValid: true,
             userNameValid: true,
             passValid: true,
@@ -303,7 +306,6 @@
                         });
                 }
             },
-
             addCommit: function () {
                 console.log('uuid-', this.checkedTask.uuid);
                 if (this.new_comit.text.trim() !== '') {

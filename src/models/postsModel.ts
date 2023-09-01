@@ -15,7 +15,6 @@ export interface IPostModel {
 
 export interface PostInstance extends Model<IPostModel>, IPostModel {
 }
-
 export type PostsModelStatic = typeof Model & {
     new(values?: object, options?: BuildOptions): PostInstance;
 };
@@ -52,10 +51,10 @@ export const postsModel: PostsModelStatic = sequelize.define('PostsList', {
     },
     uuid: {
         allowNull: false,
-        unique:true,
+        unique: true,
         type: DataTypes.STRING
     },
 }) as PostsModelStatic
 
-/*
-commitModel.belongsTo(postsModel);*/
+
+/*commitModel.belongsTo(postsModel);*/

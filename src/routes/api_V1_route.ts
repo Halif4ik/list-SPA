@@ -2,11 +2,11 @@ import {Request, Response, Router} from "express";
 import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
 import {isCorrectToken} from "../midleware/iscorectToken";
 import {PostInstance, postsModel} from "../models/postsModel";
-import {commitModel} from "../models/comentsOfPost";
+import {commitModel, CommitsInstance} from "../models/comentsOfPost";
+import model from "../models/comentsOfPost";
 import Tokens from "csrf";
 import {uuid} from 'uuidv4';
 import {Op} from "sequelize";
-import {CommitsInstance} from "../models/comentsOfPost";
 
 const {PAGE_PAGINATION} = require('../constants');
 
@@ -22,7 +22,7 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
     }
     try {
         /*hook*/
-        const amountAll: number = await commitModel.count({
+        const amountAll: number = await model.count({
             where: {
                 id: {
                     [Op.gt]: 0
@@ -31,7 +31,7 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
         });
         countAllComents = amountAll;
 
-        const commitItem: CommitsInstance = await commitModel.create({
+        const commitItem: CommitsInstance = await model.create({
             id: ++countAllComents,
             text: req.body.text,
             parentUuid: req.body.parentUuid
@@ -74,6 +74,10 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
             limit: limit,
             offset: offset,
         });
+        /*get commit*/
+
+        console.log('rows0000-',rows[0].dataValues.uuid);
+
         res.send({
             items: rows,
             loginOfCurrentUser: req.session.customer[0].login,
