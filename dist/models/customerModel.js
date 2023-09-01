@@ -8,7 +8,7 @@ exports.CustomerModel = database_1.sequelize.define('customer_list', {
         primaryKey: true,
         autoIncrement: true,
         allowNull: false,
-        type: sequelize_1.DataTypes.INTEGER
+        type: sequelize_1.DataTypes.TINYINT.UNSIGNED
     },
     login: {
         allowNull: false,

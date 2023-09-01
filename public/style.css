@@ -8,11 +8,11 @@ h1 {
     font-family: Arial;
     font-weight: bold;
     color: black;
-    margin-left: 30px;
+    margin: 0 0 0 30px !important;
 }
 
 header {
-    display: flex;
+    display: flex !important;
     justify-content: space-between;
     border-bottom: 5px solid rgba(255, 181, 60, 0.9);
     background: white;
@@ -116,7 +116,7 @@ main {
 
 .taskCompleted .task_content {
     color: rgba(255, 181, 60, 0.9);
-    text-decoration: line-through;
+    /*text-decoration: line-through;*/
 }
 
 .task_content {
@@ -199,7 +199,8 @@ button {
 }
 
 .settings input {
-    width: 300px;
+    width: 300px !important;
+    height: unset !important;
 }
 
 .settings button {
@@ -243,7 +244,7 @@ button.primary:hover {
 }
 
 hr {
-    margin-top: 50px;
+    margin-top: 5px;
 }
 
 .settings {
@@ -258,4 +259,17 @@ hr {
     display: flex;
     justify-content: center;
     gap: 5px;
+    margin-top: 30px;
+    padding: 5px;
+}
+.LoginInput .errorMsg{
+    color: darkred;
+    top: 116px;
+    position: absolute;
+}
+.LoginInput .errorMsg.pass{
+    top: 180px;
+}
+.LoginInput .errorMsg.user-name{
+    top: 245px;
 }

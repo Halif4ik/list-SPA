@@ -17,11 +17,42 @@ const express_1 = require("express");
 const validator_1 = require("../midleware/validator");
 const iscorectToken_1 = require("../midleware/iscorectToken");
 const postsModel_1 = require("../models/postsModel");
+const comentsOfPost_1 = require("../models/comentsOfPost");
 const csrf_1 = __importDefault(require("csrf"));
+const uuidv4_1 = require("uuidv4");
 const sequelize_1 = require("sequelize");
 const { PAGE_PAGINATION } = require('../constants');
 exports.apiV1Route = (0, express_1.Router)({});
 let countAllItemsInTodoList = 0;
+let countAllComents = 0;
+/*create COMENT for Post*/
+exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!req.session.isAuthenticated) {
+        console.log('create new task Error');
+        return res.send({ error: 'forbidden' });
+    }
+    try {
+        /*hook*/
+        const amountAll = yield comentsOfPost_1.commitModel.count({
+            where: {
+                id: {
+                    [sequelize_1.Op.gt]: 0
+                }
+            }
+        });
+        countAllComents = amountAll;
+        const commitItem = yield comentsOfPost_1.commitModel.create({
+            id: ++countAllComents,
+            text: req.body.text,
+            parentUuid: req.body.parentUuid
+        });
+        res.status(201).send(commitItem);
+    }
+    catch (e) {
+        console.log(e);
+        res.sendStatus(404);
+    }
+}));
 /*getAll*/
 exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.session.isAuthenticated)
@@ -51,7 +82,12 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
             limit: limit,
             offset: offset,
         });
-        res.send({ items: rows, '_csrf': tokenSentToFront, amountPage: Math.ceil(amountAll / PAGE_PAGINATION) });
+        res.send({
+            items: rows,
+            loginOfCurrentUser: req.session.customer[0].login,
+            '_csrf': tokenSentToFront,
+            amountPage: Math.ceil(amountAll / PAGE_PAGINATION)
+        });
     }
     catch (e) {
         console.log(e);
@@ -81,7 +117,6 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
         console.log('create new task Error');
         return res.send({ error: 'forbidden' });
     }
-    console.log('!!!apiV1Route-');
     try {
         const todoItem = postsModel_1.postsModel.build({
             id: ++countAllItemsInTodoList,
@@ -89,9 +124,9 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
             text: req.body.text,
             login: req.session.customer[0].login,
             userName: req.session.customer[0].userName,
-            face: req.session.customer[0].face
+            face: req.session.customer[0].face,
+            uuid: (0, uuidv4_1.uuid)(),
         });
-        console.log('!!!!!!!todoItem-', todoItem);
         yield todoItem.save();
         res.status(201).send(todoItem);
     }
@@ -108,7 +143,7 @@ exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.text
         if (postIsChanging && postIsChanging.login === req.session.customer[0].login) {
             postIsChanging.text = req.body.text;
             postIsChanging.checked = !!req.body.checked;
-            postIsChanging === null || postIsChanging === void 0 ? void 0 : postIsChanging.save();
+            postIsChanging.save();
             res.status(201).send({ 'ok': true });
         }
         else {

@@ -1,4 +1,4 @@
-import express, {Request, Response} from 'express';
+import express, {Express, Request, Response} from 'express';
 import path from 'node:path';
 import bodyParser from "body-parser";
 import {apiV1Route} from "./routes/api_V1_route";
@@ -46,7 +46,7 @@ exprApp.use((req: Request, res: Response) => {
 async function start():Promise<void> {
     try {
         /*if (await sequelize.authenticate()) console.log('Connection has been established successfully.')*/
-        await sequelize.sync({force: false});
+        await sequelize.sync({force: true});
         exprApp.listen(port)
     } catch (e) {
         console.log(e);

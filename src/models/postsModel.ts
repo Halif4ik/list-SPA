@@ -1,8 +1,8 @@
 import {BuildOptions, DataTypes, Model} from 'sequelize'
 import {sequelize} from '../utils/database';
-import {comentModel} from "./comentsOfPost";
+import {commitModel} from "./comentsOfPost";
 
-export interface ItodoModel {
+export interface IPostModel {
     id: number;
     checked: boolean;
     text: string;
@@ -10,15 +10,16 @@ export interface ItodoModel {
     login: string;
     userName: string;
     face: number;
+    uuid: string;
 }
 
-export interface TodoInstance extends Model<ItodoModel>, ItodoModel {
+export interface PostInstance extends Model<IPostModel>, IPostModel {
 }
 
 export type PostsModelStatic = typeof Model & {
-    new(values?: object, options?: BuildOptions): TodoInstance;
+    new(values?: object, options?: BuildOptions): PostInstance;
 };
-export const postsModel: PostsModelStatic = sequelize.define('TodoList', {
+export const postsModel: PostsModelStatic = sequelize.define('PostsList', {
     id: {
         primaryKey: true,
         autoIncrement: true,
@@ -56,4 +57,5 @@ export const postsModel: PostsModelStatic = sequelize.define('TodoList', {
     },
 }) as PostsModelStatic
 
-comentModel.belongsTo(postsModel);
+/*
+commitModel.belongsTo(postsModel);*/

@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>List messages</title>
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -13,35 +17,42 @@
     </header>
     <main>
         <div class="settings">
-            <h3>Настройки приложения:</h2>
-                <label>
-                    Api URL:
-                    <input type="text" v-model="apiURL">
-                </label>
-                <div>
-                    На каком языке бекенд?
-                    <button @click="backendLanguage='JS'" :class="{'selected': backendLanguage === 'JS'}">JS</button>
-                </div>
-                <div>
-                    Версия АПИ
-                    <button @click="apiVersion='v1'" :class="{'selected': apiVersion === 'v1'}">v1</button>
-                </div>
-                <div>
-                    <button @click="getTasks()" class="primary">Поехали</button>
-                </div>
+            <h6>Настройки приложения:</h6>
+            <label>
+                Api URL:
+                <input type="text" v-model="apiURL">
+            </label>
+            <div>
+                На каком языке бекенд?
+                <button @click="backendLanguage='JS'" v-bind:class="{'selected': backendLanguage === 'JS'}">JS
+                </button>
+            </div>
+            <div>
+                Версия АПИ
+                <button @click="apiVersion='v1'" :class="{'selected': apiVersion === 'v1'}">v1</button>
+            </div>
+            <div>
+                <button @click="getTasks()" class="primary">Поехали</button>
+            </div>
         </div>
         <div class="wrapper login" v-if="step === 'login'">
-            <h3>Доступ к учетной записи</h1>
-                <div class="LoginInput">
-                    <input v-model="login" type="text" placeholder="yaropolk@example.com" autofocus required>
-                    <input v-model="pass" type="password" placeholder="******" required>
-                    <input v-model="userName" type="text" placeholder="user name" autocomplete="on">
-                    <input v-model="homePage" type="text" placeholder="homePage" autocomplete="on">
-                </div>
-                <div class="LoginButton">
-                    <button @click="register">Зарегистрироваться</button>
-                    <button @click="logIn" class="primary">Войти</button>
-                </div>
+            <h5>Доступ к учетной записи</h5>
+            <div class="LoginInput">
+                <input v-model.lazy="login" :class="emailValid ? 'validate':'validate invalid'" type="email"
+                       :placeholder="eplaceHolder" autofocus required>
+                <span class="errorMsg" v-if="!this.emailValid">Incorrect format E-mail</span>
+                <input v-model.lazy="pass" class="validate" type="password" placeholder="******" required minlength="6"
+                       maxlength="20">
+                <span class="errorMsg pass" v-if="!this.passValid">Password length min 6</span>
+                <input v-model.lazy="userName" class="validate" type="text" placeholder="user name" autocomplete="on"
+                       required>
+                <span class="errorMsg user-name" v-if="!this.userNameValid">User name length min 1</span>
+                <input v-model="homePage" type="url" placeholder="homePage" autocomplete="on">
+            </div>
+            <div class="LoginButton">
+                <button @click="register">Зарегистрироваться</button>
+                <button @click="logIn" class="primary">Войти</button>
+            </div>
         </div>
         <div class="wrapper" v-else-if="step === 'items'">
             <h3>Добавить новую запись:</h3>
@@ -50,37 +61,38 @@
                     <input @keyup.enter="addTask" class="new_todo" autofocus autocomplete="off"
                            placeholder="Create new post"
                            type="text" v-model="new_task.text">
-                    <span><button @click="addTask" class="button new_todo_button">Постить</button></span>
+                    <span><button @click="addTask" @keypress.enter="addTask"
+                                  class="button new_todo_button">Постить</button></span>
                 </label>
             </div>
             <div v-else>
                 <label style="display: flex;">
                     <input @keyup.enter="addCommit" class="new_todo" value=""
                            placeholder="Create comment for checked post"
-                           type="text" v-model="new_comit">
-                    <span><button @click="addCommit" class="button new_todo_button">Коментить</button></span>
+                           type="text" v-model="new_comit.text">
+                    <span><button @click="addCommit" @keypress.enter="addCommit" class="button new_todo_button">Коментить</button></span>
                 </label>
             </div>
 
             <h3 class="status_title">{{ 'Все записи: ' + tasks.length }}</h3>
             <task @task_del="deleteTask(task.id)"
                   @task_edit="editTask(index)"
-                  @task_done="markAsDone(index, task.id)"
+                  @task_done="markForCommit(index,task)"
                   @save="save(index, task.id)"
                   @disable="disable(index)"
                   @get_my_tasks="getOnlyMyTasks()"
                   :data="task"
-                  :index="index+1"
-                  :login="userName"
+                  v-bind:index="index+1"
                   v-for="(task, index) in tasks"
+                  :login="currentLogin"
                   :key="index"></task>
 
-            <div class="wrapper pagination">
+            <div class="wrapper pagination" v-if="pages > 1">
                 <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx }}</button>
             </div>
 
             <hr>
-            <button @click="logout" class="logout">Выйти &#128682;</button>
+            <button @click="logout" class="logout btn btm-small js-remove">Выйти &#128682;</button>
         </div>
         <div class="wrapper" v-else-if="step === 'error'">
             Произошла ошибка. Откройте консоль разработчика чтоб увидеть подробности.
@@ -92,17 +104,18 @@
         props: ["data", "index", "login"],
         template: `
           <div class="task" v-bind:class="{ taskCompleted: data.checked}">
-            <div class="contentText">
-              <div>
-                <button @click="$emit('task_done')" class="task_done taskButton">
-                  <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
-                  <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
-                </button>
-                <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
-                <span class="task_head">
+          <div class="contentText">
+            <div>
+              <button @click="$emit('task_done')" class="task_done taskButton">
+                <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
+                <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
+              </button>
+              <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
+              <span class="task_head">
                    <strong>{{ data.userName }}</strong> {{ data.createdAt }}
                 </span>
-              </div>
+            </div>
+            <div v-if="login == data.login">
               <div class="button check" v-if="!data.editable">
                 <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
                 <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
@@ -113,13 +126,14 @@
                 <button @click="$emit('disable')"> ✕</button>
               </div>
             </div>
-            <div class="task_content" v-if="!data.editable">
-              {{ data.text }}
-            </div>
-            <div v-else>
-              {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
-                                 class="edit-input"/>
-            </div>
+          </div>
+          <div class="task_content" v-if="!data.editable">
+            {{ data.text }}
+          </div>
+          <div v-else>
+            {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
+                               class="edit-input"/>
+          </div>
           </div>
         `
     });
@@ -138,9 +152,10 @@
             },
             tasks: [],
             login: '',
+            userName: '',
             face: '',
             pages: '',
-            userName: '',
+            currentLogin: '',
             homePage: '',
             _csrf: '',
             pass: '',
@@ -148,12 +163,28 @@
             apiURL: 'http://localhost:3001/api/',
             apiVersion: 'v1',
             step: '',
-            posting: true
+            posting: true,
+            checkedTask: '',
+            eplaceHolder: 'yaropolk@example.com',
+            emailValid: true,
+            userNameValid: true,
+            passValid: true,
         },
 
         computed: {
-            backendSuffix() {
-                return this.backendLanguage = '';
+            /*isEmailValid() {
+                return this.emailValid;
+            },*/
+        },
+        watch: {
+            login(value) {
+                this.emailValid = /\w+@/.test(value);
+            },
+            pass(value) {
+                this.passValid = value.length > 6 && value.length < 20;
+            },
+            userName(value) {
+                this.userNameValid = value.length > 0;
             },
         },
         methods: {
@@ -161,7 +192,7 @@
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? '' : 'getItems'};
 
-                fetch(this.apiURL + this.apiVersion + route + '/my' + this.backendSuffix + '?' + new URLSearchParams(qs), {
+                fetch(this.apiURL + this.apiVersion + route + '/my' + '?' + new URLSearchParams(qs), {
                     credentials: 'include',
                     method: this.apiVersion === 'v1' ? 'GET' : 'POST',
                 })
@@ -194,7 +225,7 @@
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? numberPage : 'getItems'};
                 /*http://localhost:3001/api/v1/items?action=1*/
-                fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
+                fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                     credentials: 'include',
                     method: this.apiVersion === 'v1' ? 'GET' : 'POST',
                 })
@@ -205,6 +236,7 @@
                         } else {
                             this._csrf = response['_csrf'];
                             this.pages = parseInt(response['amountPage']) || 0;
+                            this.currentLogin = response['loginOfCurrentUser'];
                             /*sorting*/
                             this.tasks = response.items.sort(function (oneCommit, secCommit) {
                                 return Date.parse(secCommit.createdAt) - Date.parse(oneCommit.createdAt);
@@ -232,7 +264,7 @@
                 let request = JSON.stringify({id: index,});
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? '' : 'deleteItem'};
-                fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
+                fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                     method: this.apiVersion === 'v1' ? 'DELETE' : 'POST',
                     body: request,
                     credentials: 'include',
@@ -248,13 +280,12 @@
                         }
                     });
             },
-
             addTask: function () {
                 if (this.new_task.text.trim() !== '') {
                     let request = JSON.stringify({text: this.new_task.text, _csrf: this._csrf});
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'createItem'};
-                    fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
+                    fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
                         body: request,
                         credentials: 'include',
@@ -272,30 +303,32 @@
                         });
                 }
             },
-            addCommit: function (index, id) {
-                let request = JSON.stringify({
-                    text: this.tasks[index].text,
-                    parentPostId: id,
-                    _csrf: this._csrf
-                });
-                /*{"text":"Djon!!!","id":1,"checked":true}*/
-                const route = this.apiVersion === 'v1' ? '/items' : '/router';
-                const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
-                fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
-                    method: this.apiVersion === 'v1' ? 'POST' : 'POST',
-                    body: request,
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                })
-                    .then(res => res.json())
-                    .then(() => {
-                        this.posting = true;
-                        this.getTasks()
-                    });
-            },
 
+            addCommit: function () {
+                console.log('uuid-', this.checkedTask.uuid);
+                if (this.new_comit.text.trim() !== '') {
+                    let request = JSON.stringify({
+                        text: this.new_comit.text,
+                        parentUuid: this.checkedTask.uuid,
+                        _csrf: this._csrf
+                    });
+                    const route = this.apiVersion === 'v1' ? '/items' : '/router';
+                    const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
+                    fetch(this.apiURL + this.apiVersion + route + '/commit' + '?' + new URLSearchParams(qs), {
+                        method: this.apiVersion === 'v1' ? 'POST' : 'POST',
+                        body: request,
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                    })
+                        .then(res => res.json())
+                        .then(() => {
+                            this.posting = true;
+                            this.getTasks()
+                        });
+                }
+            },
             updateTask: function (index, id) {
                 let request = JSON.stringify({
                     text: this.tasks[index].text,
@@ -306,7 +339,7 @@
                 /*{"text":"Djon!!!","id":1,"checked":true}*/
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
-                fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
+                fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                     method: this.apiVersion === 'v1' ? 'PUT' : 'POST',
                     body: request,
                     credentials: 'include',
@@ -319,11 +352,12 @@
                         this.getTasks()
                     });
             },
-            markAsDone(index, id) {
+            markForCommit(index, task) {
+                console.log('!index-', index);
+                console.log('!task-', task);
+                this.$set(this.tasks[index], 'checked', !this.tasks[index].checked);
                 this.posting = !this.posting;
-                this.$set(this.tasks[index], 'checked', !this.tasks[index].checked)
-                this.checked = this.tasks[index].checked;
-                this.updateTask(index, id)
+                this.checkedTask = task;
             },
             editTask(index) {
                 this.$set(this.tasks[index], 'editable', true);
@@ -359,7 +393,7 @@
                     let params = JSON.stringify({login: this.login, pass: this.pass});
                     const route = this.apiVersion === 'v1' ? '/login' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'login'};
-                    fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
+                    fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
                         credentials: 'include',
                         headers: {
@@ -392,7 +426,7 @@
                     });
                     const route = this.apiVersion === 'v1' ? '/register' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'register'};
-                    fetch(this.apiURL + this.apiVersion + route + this.backendSuffix + '?' + new URLSearchParams(qs), {
+                    fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
                         body: params,
                         headers: {

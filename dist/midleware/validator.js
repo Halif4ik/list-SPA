@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkValidationInMiddleWare = exports.passwordValidInBodyMiddleware = exports.emailValidMiddleware = exports.homePValid = exports.textValidMiddleware = exports.idValid = void 0;
 const express_validator_1 = require("express-validator");
 function idValid() {
-    return (0, express_validator_1.body)('id').trim().isLength({ min: 1, max: 50 }).isNumeric().withMessage("Id should be Number");
+    return (0, express_validator_1.body)('id').trim().isLength({ min: 1 }).isNumeric().withMessage("Id should be Number");
 }
 exports.idValid = idValid;
 function textValidMiddleware() {
@@ -11,11 +11,13 @@ function textValidMiddleware() {
 }
 exports.textValidMiddleware = textValidMiddleware;
 function homePValid() {
-    return (0, express_validator_1.body)('homePage').isURL().withMessage("Home page field should be URl format");
+    return (0, express_validator_1.body)('homePage').optional({
+        values: 'falsy',
+    }).isURL().escape().withMessage("Home page field should be URl format");
 }
 exports.homePValid = homePValid;
 function emailValidMiddleware() {
-    return (0, express_validator_1.body)('login').isEmail().withMessage("Email should be email");
+    return (0, express_validator_1.body)('login').isEmail().escape().withMessage("Email should be email");
 }
 exports.emailValidMiddleware = emailValidMiddleware;
 function passwordValidInBodyMiddleware() {

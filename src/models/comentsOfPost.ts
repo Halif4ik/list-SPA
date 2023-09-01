@@ -1,21 +1,20 @@
 import Sequelize, {BuildOptions, DataTypes, Model} from 'sequelize'
 import {sequelize} from '../utils/database';
-import {postsModel} from "./postsModel";
 
-export interface IcomentModel {
+export interface IComentModel {
     id: number;
     text: string;
-    login: string;
+    parentUuid: string;
+}
+export interface CommitsInstance extends Model<IComentModel>, IComentModel {
 }
 
-export interface ComentsInstance extends Model<IcomentModel>, IcomentModel {
-}
-
-export type ComentModelStatic = typeof Model & {
-    new(values?: object, options?: BuildOptions): ComentsInstance;
+export type CommitModelStatic = typeof Model & {
+    new(values?: object, options?: BuildOptions): CommitsInstance;
 };
-export const comentModel: ComentModelStatic = sequelize.define('ComentsList', {
+export const commitModel: CommitModelStatic = sequelize.define('ComentsList', {
     id: {
+        primaryKey: true,
         autoIncrement: true,
         type: DataTypes.SMALLINT.UNSIGNED
     },
@@ -23,11 +22,11 @@ export const comentModel: ComentModelStatic = sequelize.define('ComentsList', {
         allowNull: false,
         type: DataTypes.STRING
     },
-    login: {
+    parentUuid: {
         allowNull: false,
         type: DataTypes.STRING
     },
-}) as ComentModelStatic
+}) as CommitModelStatic
 
 /*class Coment extends Model {}
 Coment.init({
@@ -45,5 +44,4 @@ Coment.init({
     },
 }, { sequelize, modelName: 'Coment' });
 Coment.postsModel = postsModel.hasMany(Coments);*/
-
-postsModel.hasMany(comentModel, {foreignKey: 'uuid'});
+/*postsModel.hasMany(commitModel, {foreignKey: 'uuid'});*/
