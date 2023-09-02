@@ -16,9 +16,9 @@ exports.apiV1Route = void 0;
 const express_1 = require("express");
 const validator_1 = require("../midleware/validator");
 const iscorectToken_1 = require("../midleware/iscorectToken");
-const postsModel_1 = require("../models/postsModel");
-const comentsOfPost_1 = __importDefault(require("../models/comentsOfPost"));
-const comentsOfPost_2 = __importDefault(require("../models/comentsOfPost"));
+const post_1 = require("../models/post");
+const Commits_1 = __importDefault(require("../models/Commits"));
+const customer_1 = __importDefault(require("../models/customer"));
 const csrf_1 = __importDefault(require("csrf"));
 const uuidv4_1 = require("uuidv4");
 const sequelize_1 = require("sequelize");
@@ -33,8 +33,15 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
         return res.send({ error: 'forbidden' });
     }
     try {
+        const curCustomer = yield customer_1.default.findOne({
+            where: {
+                id: {
+                    [sequelize_1.Op.eq]: req.session.customer[0].id
+                }
+            }
+        });
         /*hook*/
-        const amountAll = yield comentsOfPost_1.default.count({
+        const amountAll = yield Commits_1.default.count({
             where: {
                 id: {
                     [sequelize_1.Op.gt]: 0
@@ -42,17 +49,25 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
             }
         });
         countAllComents = amountAll;
-        const commitItem = new comentsOfPost_2.default({
+        const commitItem = new Commits_1.default({
             id: ++countAllComents,
+            customer_id: req.session.customer[0].id,
             text: req.body.text,
             parentUuid: req.body.parentUuid
         });
-        /* const commitItem: CommitsInstance =  model.build({
-             id: ++countAllComents,
-             text: req.body.text,
-             parentUuid: req.body.parentUuid
-         });*/
         yield commitItem.save();
+        yield Commits_1.default.bulkCreate([{
+                customer_id: req.session.customer[0].id,
+                text: req.body.text,
+                parentUuid: req.body.parentUuid
+            }]);
+        console.log('********', yield curCustomer.getCommits());
+        /* console.log('////!***', await curCustomer.findAll({
+             where: {},
+             include: [{
+                 association: 'Commits',
+             }]
+         }));*/
         res.status(201).send(commitItem);
     }
     catch (e) {
@@ -74,7 +89,7 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
         reqCurrentPage = '1';
     try {
         /*calculating all*/
-        const amountAll = yield postsModel_1.postsModel.count({
+        const amountAll = yield post_1.Post.count({
             where: {
                 id: {
                     [sequelize_1.Op.gt]: 0
@@ -85,12 +100,12 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
         let offset = amountAll - (parseInt(reqCurrentPage) * PAGE_PAGINATION);
         let limit = offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
         offset = offset < 0 ? 0 : offset;
-        const rows = yield postsModel_1.postsModel.findAll({
+        const rows = yield post_1.Post.findAll({
             limit: limit,
             offset: offset,
         });
         /*get commit*/
-        console.log('rows0000-', rows[0].dataValues.uuid);
+        console.log('rows0000-', rows[0] && rows[0]["text"]);
         res.send({
             items: rows,
             loginOfCurrentUser: req.session.customer[0].login,
@@ -108,7 +123,7 @@ exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, fu
     if (!req.session.isAuthenticated)
         return res.send({ error: 'forbidden' });
     try {
-        const allTodos = yield postsModel_1.postsModel.findAll({
+        const allTodos = yield post_1.Post.findAll({
             where: {
                 login: req.session.customer[0].login
             },
@@ -127,7 +142,7 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
         return res.send({ error: 'forbidden' });
     }
     try {
-        const todoItem = postsModel_1.postsModel.build({
+        const todoItem = post_1.Post.build({
             id: ++countAllItemsInTodoList,
             checked: req.body.done === 'true',
             text: req.body.text,
@@ -147,7 +162,7 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
 exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const postIsChanging = yield postsModel_1.postsModel.findByPk(+req.body.id);
+        const postIsChanging = yield post_1.Post.findByPk(+req.body.id);
         /*ckeking if curent user make changing*/
         if (postIsChanging && postIsChanging.login === req.session.customer[0].login) {
             postIsChanging.text = req.body.text;
@@ -168,7 +183,7 @@ exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.text
 exports.apiV1Route.delete('/', (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const deleteTodoItem = yield postsModel_1.postsModel.findAll({
+        const deleteTodoItem = yield post_1.Post.findAll({
             where: {
                 id: +req.body.id
             }

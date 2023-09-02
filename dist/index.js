@@ -46,7 +46,7 @@ function start() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             /*if (await sequelize.authenticate()) console.log('Connection has been established successfully.')*/
-            yield database_1.sequelize.sync({ force: false });
+            yield database_1.sequelize.sync({ force: true });
             exprApp.listen(port);
         }
         catch (e) {

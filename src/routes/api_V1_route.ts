@@ -1,10 +1,9 @@
 import {Request, Response, Router} from "express";
 import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
 import {isCorrectToken} from "../midleware/iscorectToken";
-import {PostInstance, Post} from "../models/post";
-import {commitModel, CommitsInstance} from "../models/comentsOfPost";
-import model from "../models/comentsOfPost";
-import Commit from "../models/comentsOfPost";
+import {Post, PostInstance} from "../models/post";
+import Commit from "../models/Commits";
+import Customer from "../models/customer";
 import Tokens from "csrf";
 import {uuid} from 'uuidv4';
 import {Op} from "sequelize";
@@ -22,8 +21,15 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
         return res.send({error: 'forbidden'});
     }
     try {
+        const curCustomer = await Customer.findOne({
+            where: {
+                id: {
+                    [Op.eq]: req.session.customer[0].id
+                }
+            }
+        });
         /*hook*/
-        const amountAll: number = await model.count({
+        const amountAll: number = await Commit.count({
             where: {
                 id: {
                     [Op.gt]: 0
@@ -32,17 +38,28 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
         });
         countAllComents = amountAll;
 
-        const commitItem = new Commit ({
+        const commitItem = new Commit({
             id: ++countAllComents,
+            customer_id: req.session.customer[0].id,
             text: req.body.text,
             parentUuid: req.body.parentUuid
         })
-       /* const commitItem: CommitsInstance =  model.build({
-            id: ++countAllComents,
+        await commitItem.save();
+
+        await Commit.bulkCreate([{
+            customer_id: req.session.customer[0].id,
             text: req.body.text,
             parentUuid: req.body.parentUuid
-        });*/
-        await commitItem.save();
+        }])
+
+        console.log('********', await curCustomer.getCommits());
+       /* console.log('////!***', await curCustomer.findAll({
+            where: {},
+            include: [{
+                association: 'Commits',
+            }]
+        }));*/
+
         res.status(201).send(commitItem);
     } catch (e) {
         console.log(e);
@@ -82,7 +99,7 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
         });
         /*get commit*/
 
-        console.log('rows0000-',rows[0].dataValues.uuid);
+        console.log('rows0000-', rows[0] && rows[0]["text"]);
 
         res.send({
             items: rows,
@@ -126,8 +143,8 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
             face: req.session.customer[0].face,
             uuid: uuid(),
         });
-
         await todoItem.save();
+
         res.status(201).send(todoItem);
     } catch (e) {
         console.log(e);

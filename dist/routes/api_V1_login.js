@@ -16,7 +16,7 @@ exports.apiV1LoginRegisRoute = void 0;
 const express_1 = require("express");
 const validator_1 = require("../midleware/validator");
 const csrf_1 = __importDefault(require("csrf"));
-const customerModel_1 = require("../models/customerModel");
+const customer_1 = __importDefault(require("../models/customer"));
 const { SEND_GRID_API_KEY, BASE_URL, HOST_EMAIL } = require('../constants');
 const bcrypt = require('bcryptjs');
 /*import {bcrypt} from 'bcryptjs';*/
@@ -33,7 +33,7 @@ let arrHexsFaces = ['👩‍🦰'.codePointAt(0), '👨‍🦲'.codePointAt(0), 
 exports.apiV1LoginRegisRoute.post('/login', (0, validator_1.emailValidMiddleware)(), (0, validator_1.passwordValidInBodyMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { login, pass } = req.body;
-        const registeredCustomer = yield customerModel_1.CustomerModel.findAll({
+        const registeredCustomer = yield customer_1.default.findAll({
             where: {
                 login: login
             }
@@ -93,7 +93,7 @@ exports.apiV1LoginRegisRoute.post('/logout', (req, res) => __awaiter(void 0, voi
 /*register*/
 exports.apiV1LoginRegisRoute.post('/register', (0, validator_1.emailValidMiddleware)(), (0, validator_1.passwordValidInBodyMiddleware)(), (0, validator_1.homePValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { login, pass, userName, homePage } = req.body;
-    const registeredCustomer = yield customerModel_1.CustomerModel.findAll({
+    const registeredCustomer = yield customer_1.default.findAll({
         where: {
             login: login
         }
@@ -106,12 +106,12 @@ exports.apiV1LoginRegisRoute.post('/register', (0, validator_1.emailValidMiddlew
     const tokens = new csrf_1.default();
     const secretForCustomer = yield tokens.secret();
     try {
-        const el = arrHexsFaces[Math.floor(Math.random() * (arrHexsFaces.length - 1))];
-        yield customerModel_1.CustomerModel.create({
+        const emoji = arrHexsFaces[Math.floor(Math.random() * (arrHexsFaces.length - 1))];
+        yield customer_1.default.create({
             login,
             userName,
             homePage,
-            face: el,
+            face: emoji,
             pass: yield bcrypt.hash(pass, 10),
             csrf: secretForCustomer
         });

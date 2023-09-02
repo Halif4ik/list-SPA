@@ -6,7 +6,7 @@ import {
     passwordValidInBodyMiddleware,
 } from "../midleware/validator";
 import Tokens from 'csrf';
-import {CustomerInstance, Customer} from "../models/customer";
+import Customer from "../models/customer";
 
 const {SEND_GRID_API_KEY, BASE_URL, HOST_EMAIL} = require('../constants');
 const bcrypt = require('bcryptjs');
@@ -26,7 +26,7 @@ let arrHexsFaces = ['👩‍🦰'.codePointAt(0), '👨‍🦲'.codePointAt(0), 
 apiV1LoginRegisRoute.post('/login', emailValidMiddleware(), passwordValidInBodyMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const {login, pass} = req.body;
-        const registeredCustomer: CustomerInstance[] = await Customer.findAll({
+        const registeredCustomer = await Customer.findAll({
             where: {
                 login: login
             }

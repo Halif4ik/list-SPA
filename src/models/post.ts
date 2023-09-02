@@ -1,6 +1,6 @@
 import {BuildOptions, DataTypes, Model} from 'sequelize'
 import {sequelize} from '../utils/database';
-import {commitModel} from "./comentsOfPost";
+import {commitModel} from "./Commits";
 
 export interface IPostModel {
     id: number;
