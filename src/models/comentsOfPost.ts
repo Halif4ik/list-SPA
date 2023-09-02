@@ -1,6 +1,6 @@
 import Sequelize, {BuildOptions, DataTypes, Model} from 'sequelize'
 import {sequelize} from '../utils/database';
-import {postsModel} from "./postsModel";
+import {Post} from "./post";
 
 /*export interface IComentModel {
     id: number;

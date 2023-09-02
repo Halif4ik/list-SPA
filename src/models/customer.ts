@@ -1,6 +1,6 @@
 import {DataTypes, Model} from 'sequelize'
 import {sequelize} from '../utils/database';
-
+/*
 export interface ICustomerModel {
     id: number;
     login: string;
@@ -19,7 +19,7 @@ export interface CustomerInstance extends Model<ICustomerModel, 'id' | 'login'> 
 export interface CustomerModelStatic extends Required<ICustomerModel> {
 }
 
-export const CustomerModel: CustomerModelStatic = sequelize.define('customer_list', {
+export const Customer: CustomerModelStatic = sequelize.define('customer_list', {
     id: {
         primaryKey: true,
         autoIncrement: true,
@@ -51,4 +51,25 @@ export const CustomerModel: CustomerModelStatic = sequelize.define('customer_lis
         allowNull: true,
         type: DataTypes.INTEGER
     },
-}) as CustomerModelStatic
+}) as CustomerModelStatic*/
+
+class User extends Model {
+}
+
+const model = User.init ({
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    username: {
+        type: DataTypes.STRING(255),
+        allowNull: false
+    }
+}, {
+    sequelize: db,
+    tableName: 'users',
+});
+
+model.hasOne(UserDetails, { as: 'Details', foreignKey: 'user_id' });
+model.hasMany(Project, { as: 'Projects', foreignKey: 'user_id' });

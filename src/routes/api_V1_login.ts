@@ -6,7 +6,7 @@ import {
     passwordValidInBodyMiddleware,
 } from "../midleware/validator";
 import Tokens from 'csrf';
-import {CustomerInstance, CustomerModel} from "../models/customerModel";
+import {CustomerInstance, Customer} from "../models/customer";
 
 const {SEND_GRID_API_KEY, BASE_URL, HOST_EMAIL} = require('../constants');
 const bcrypt = require('bcryptjs');
@@ -26,7 +26,7 @@ let arrHexsFaces = ['👩‍🦰'.codePointAt(0), '👨‍🦲'.codePointAt(0), 
 apiV1LoginRegisRoute.post('/login', emailValidMiddleware(), passwordValidInBodyMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const {login, pass} = req.body;
-        const registeredCustomer: CustomerInstance[] = await CustomerModel.findAll({
+        const registeredCustomer: CustomerInstance[] = await Customer.findAll({
             where: {
                 login: login
             }
@@ -88,7 +88,7 @@ apiV1LoginRegisRoute.post('/logout', async (req: Request, res: Response) => {
 /*register*/
 apiV1LoginRegisRoute.post('/register', emailValidMiddleware(), passwordValidInBodyMiddleware(), homePValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
         const {login, pass, userName, homePage} = req.body;
-        const registeredCustomer: CustomerInstance[] = await CustomerModel.findAll({
+        const registeredCustomer: CustomerInstance[] = await Customer.findAll({
             where: {
                 login: login
             }
@@ -102,12 +102,12 @@ apiV1LoginRegisRoute.post('/register', emailValidMiddleware(), passwordValidInBo
         const secretForCustomer: string = await tokens.secret();
 
         try {
-            const el = arrHexsFaces[Math.floor(Math.random() * (arrHexsFaces.length - 1))];
-            await CustomerModel.create({
+            const emoji = arrHexsFaces[Math.floor(Math.random() * (arrHexsFaces.length - 1))];
+            await Customer.create({
                 login,
                 userName,
                 homePage,
-                face: el,
+                face: emoji,
                 pass: await bcrypt.hash(pass, 10),
                 csrf: secretForCustomer
             });

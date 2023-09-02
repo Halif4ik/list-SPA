@@ -18,6 +18,7 @@ const validator_1 = require("../midleware/validator");
 const iscorectToken_1 = require("../midleware/iscorectToken");
 const postsModel_1 = require("../models/postsModel");
 const comentsOfPost_1 = __importDefault(require("../models/comentsOfPost"));
+const comentsOfPost_2 = __importDefault(require("../models/comentsOfPost"));
 const csrf_1 = __importDefault(require("csrf"));
 const uuidv4_1 = require("uuidv4");
 const sequelize_1 = require("sequelize");
@@ -41,11 +42,17 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
             }
         });
         countAllComents = amountAll;
-        const commitItem = yield comentsOfPost_1.default.create({
+        const commitItem = new comentsOfPost_2.default({
             id: ++countAllComents,
             text: req.body.text,
             parentUuid: req.body.parentUuid
         });
+        /* const commitItem: CommitsInstance =  model.build({
+             id: ++countAllComents,
+             text: req.body.text,
+             parentUuid: req.body.parentUuid
+         });*/
+        yield commitItem.save();
         res.status(201).send(commitItem);
     }
     catch (e) {

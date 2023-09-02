@@ -1,9 +1,10 @@
 import {Request, Response, Router} from "express";
 import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
 import {isCorrectToken} from "../midleware/iscorectToken";
-import {PostInstance, postsModel} from "../models/postsModel";
+import {PostInstance, Post} from "../models/post";
 import {commitModel, CommitsInstance} from "../models/comentsOfPost";
 import model from "../models/comentsOfPost";
+import Commit from "../models/comentsOfPost";
 import Tokens from "csrf";
 import {uuid} from 'uuidv4';
 import {Op} from "sequelize";
@@ -31,12 +32,17 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
         });
         countAllComents = amountAll;
 
-        const commitItem: CommitsInstance = await model.create({
+        const commitItem = new Commit ({
             id: ++countAllComents,
             text: req.body.text,
             parentUuid: req.body.parentUuid
-        });
-
+        })
+       /* const commitItem: CommitsInstance =  model.build({
+            id: ++countAllComents,
+            text: req.body.text,
+            parentUuid: req.body.parentUuid
+        });*/
+        await commitItem.save();
         res.status(201).send(commitItem);
     } catch (e) {
         console.log(e);
@@ -57,7 +63,7 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
 
     try {
         /*calculating all*/
-        const amountAll: number = await postsModel.count({
+        const amountAll: number = await Post.count({
             where: {
                 id: {
                     [Op.gt]: 0
@@ -70,7 +76,7 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
         let limit = offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
         offset = offset < 0 ? 0 : offset;
 
-        const rows: PostInstance[] = await postsModel.findAll({
+        const rows: PostInstance[] = await Post.findAll({
             limit: limit,
             offset: offset,
         });
@@ -93,7 +99,7 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
 apiV1Route.get('/my', async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
     try {
-        const allTodos: PostInstance[] = await postsModel.findAll({
+        const allTodos: PostInstance[] = await Post.findAll({
             where: {
                 login: req.session.customer[0].login
             },
@@ -111,7 +117,7 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
         return res.send({error: 'forbidden'});
     }
     try {
-        const todoItem: PostInstance = postsModel.build({
+        const todoItem: PostInstance = Post.build({
             id: ++countAllItemsInTodoList,
             checked: req.body.done === 'true',
             text: req.body.text,
@@ -132,7 +138,7 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
 apiV1Route.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
-        const postIsChanging: PostInstance | null = await postsModel.findByPk(+req.body.id);
+        const postIsChanging: PostInstance | null = await Post.findByPk(+req.body.id);
         /*ckeking if curent user make changing*/
         if (postIsChanging && postIsChanging.login === req.session.customer[0].login) {
             postIsChanging.text = req.body.text;
@@ -152,7 +158,7 @@ apiV1Route.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValid
 /* deleteTask */
 apiV1Route.delete('/', idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
-        const deleteTodoItem: PostInstance[] = await postsModel.findAll({
+        const deleteTodoItem: PostInstance[] = await Post.findAll({
             where: {
                 id: +req.body.id
             }

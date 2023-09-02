@@ -18,7 +18,7 @@ export interface PostInstance extends Model<IPostModel>, IPostModel {
 export type PostsModelStatic = typeof Model & {
     new(values?: object, options?: BuildOptions): PostInstance;
 };
-export const postsModel: PostsModelStatic = sequelize.define('PostsList', {
+export const Post: PostsModelStatic = sequelize.define('PostsList', {
     id: {
         primaryKey: true,
         autoIncrement: true,
