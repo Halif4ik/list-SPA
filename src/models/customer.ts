@@ -1,5 +1,5 @@
 import {DataTypes, Model} from 'sequelize'
-import {Post} from "./post";
+import Post from "./post";
 import {sequelize} from "../utils/database";
 import Commit from './Commits';
 
@@ -23,7 +23,7 @@ const model = Customer.init({
     tableName: 'customer_list',
 });
 model.hasMany(Commit, {as: 'Commits', foreignKey: 'customer_id'});
-/*model.hasMany(Post, {as: 'Posts', foreignKey: 'customer_id'});*/
+model.hasMany(Post, {as: 'Posts', foreignKey: 'customer_id'});
 
 export default model;
 

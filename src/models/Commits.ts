@@ -10,8 +10,8 @@ const model = Commit.init({
         type: DataTypes.SMALLINT.UNSIGNED
     },
     customer_id: {type: DataTypes.TINYINT.UNSIGNED},
+    post_id: {type: DataTypes.SMALLINT.UNSIGNED},
     text: {allowNull: false, type: DataTypes.STRING},
-    parentUuid: {allowNull: false, type: DataTypes.STRING},
 }, {sequelize, tableName: 'ComentsList'});
 
 export default model;

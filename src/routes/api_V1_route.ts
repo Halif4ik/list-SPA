@@ -1,18 +1,16 @@
 import {Request, Response, Router} from "express";
 import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
 import {isCorrectToken} from "../midleware/iscorectToken";
-import {Post, PostInstance} from "../models/post";
 import Commit from "../models/Commits";
 import Customer from "../models/customer";
+import Post from "../models/post";
 import Tokens from "csrf";
-import {uuid} from 'uuidv4';
 import {Op} from "sequelize";
 
 const {PAGE_PAGINATION} = require('../constants');
 
 export const apiV1Route = Router({});
 let countAllItemsInTodoList = 0;
-let countAllComents = 0;
 
 /*create COMENT for Post*/
 apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
@@ -21,15 +19,14 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
         return res.send({error: 'forbidden'});
     }
     try {
-        const curCustomer = await Customer.findOne({
+        let curCustomer: Customer | null = await Customer.findOne({
             where: {
                 id: {
                     [Op.eq]: req.session.customer[0].id
                 }
             }
         });
-
-        /*old hook*/
+        /*old hook
         const amountAll: number = await Commit.count({
             where: {
                 id: {
@@ -38,28 +35,29 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
             }
         });
         countAllComents = amountAll;
-        const commitItem = new Commit({
+        const commitItem: Commit = new Commit({
             id: ++countAllComents,
             customer_id: req.session.customer[0].id,
             text: req.body.text,
             parentUuid: req.body.parentUuid
         })
         await commitItem.save();
-        /**/
+        */
 
-        await Commit.bulkCreate([{
+        const commitItem: Commit = await Commit.bulkCreate([{
             customer_id: req.session.customer[0].id,
             text: req.body.text,
-            parentUuid: req.body.parentUuid
+            post_id: req.body.post_id
         }])
 
+        console.log('++++++++', await curCustomer.getPosts());
         console.log('********', await curCustomer.getCommits());
-         console.log('////!***', await curCustomer.findAll({
-             where: {},
-             include: [{
-                 association: 'Commits',
-             }]
-         }));
+        /*   console.log('////!***', await curCustomer.findOne({
+               where: {},
+               include: [{
+                   association: 'Commits',
+               }]
+           }));*/
 
         res.status(201).send(commitItem);
     } catch (e) {
@@ -89,18 +87,17 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
             }
         });
         countAllItemsInTodoList = amountAll;
-
         let offset: number = amountAll - (parseInt(reqCurrentPage) * PAGE_PAGINATION);
         let limit = offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
         offset = offset < 0 ? 0 : offset;
-
-        const rows: PostInstance[] = await Post.findAll({
+        const rows: Post[] = await Post.findAll({
+            where: {},
+            include: [{
+                association: 'Commits',
+            }],
             limit: limit,
             offset: offset,
         });
-        /*get commit*/
-
-        console.log('rows0000-', rows[0] && rows[0]["text"]);
 
         res.send({
             items: rows,
@@ -135,18 +132,19 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
         return res.send({error: 'forbidden'});
     }
     try {
-        const todoItem: PostInstance = Post.build({
+        const postItem: Post = Post.build({
             id: ++countAllItemsInTodoList,
             checked: req.body.done === 'true',
             text: req.body.text,
+            customer_id: req.session.customer[0].id,
+
             login: req.session.customer[0].login,
             userName: req.session.customer[0].userName,
             face: req.session.customer[0].face,
-            uuid: uuid(),
         });
-        await todoItem.save();
+        await postItem.save();
 
-        res.status(201).send(todoItem);
+        res.status(201).send(postItem);
     } catch (e) {
         console.log(e);
         res.sendStatus(404)
@@ -156,9 +154,11 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
 apiV1Route.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
-        const postIsChanging: PostInstance | null = await Post.findByPk(+req.body.id);
-        /*ckeking if curent user make changing*/
-        if (postIsChanging && postIsChanging.login === req.session.customer[0].login) {
+        const postIsChanging = await Post.findByPk(+req.body.id);
+        /*ckeking if curent user make changing
+        console.log(postIsChanging.login === req.session.customer[0].login);*/
+
+        if (postIsChanging) {
             postIsChanging.text = req.body.text;
             postIsChanging.checked = !!req.body.checked
             postIsChanging.save();

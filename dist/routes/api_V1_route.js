@@ -16,16 +16,14 @@ exports.apiV1Route = void 0;
 const express_1 = require("express");
 const validator_1 = require("../midleware/validator");
 const iscorectToken_1 = require("../midleware/iscorectToken");
-const post_1 = require("../models/post");
 const Commits_1 = __importDefault(require("../models/Commits"));
 const customer_1 = __importDefault(require("../models/customer"));
+const post_1 = __importDefault(require("../models/post"));
 const csrf_1 = __importDefault(require("csrf"));
-const uuidv4_1 = require("uuidv4");
 const sequelize_1 = require("sequelize");
 const { PAGE_PAGINATION } = require('../constants');
 exports.apiV1Route = (0, express_1.Router)({});
 let countAllItemsInTodoList = 0;
-let countAllComents = 0;
 /*create COMENT for Post*/
 exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.session.isAuthenticated) {
@@ -33,42 +31,43 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
         return res.send({ error: 'forbidden' });
     }
     try {
-        const curCustomer = yield customer_1.default.findOne({
+        let curCustomer = yield customer_1.default.findOne({
             where: {
                 id: {
                     [sequelize_1.Op.eq]: req.session.customer[0].id
                 }
             }
         });
-        /*old hook*/
-        const amountAll = yield Commits_1.default.count({
+        /*old hook
+        const amountAll: number = await Commit.count({
             where: {
                 id: {
-                    [sequelize_1.Op.gt]: 0
+                    [Op.gt]: 0
                 }
             }
         });
         countAllComents = amountAll;
-        const commitItem = new Commits_1.default({
+        const commitItem: Commit = new Commit({
             id: ++countAllComents,
             customer_id: req.session.customer[0].id,
             text: req.body.text,
             parentUuid: req.body.parentUuid
-        });
-        yield commitItem.save();
-        /**/
-        yield Commits_1.default.bulkCreate([{
+        })
+        await commitItem.save();
+        */
+        const commitItem = yield Commits_1.default.bulkCreate([{
                 customer_id: req.session.customer[0].id,
                 text: req.body.text,
-                parentUuid: req.body.parentUuid
+                post_id: req.body.post_id
             }]);
+        console.log('++++++++', yield curCustomer.getPosts());
         console.log('********', yield curCustomer.getCommits());
-        console.log('////!***', yield curCustomer.findAll({
-            where: {},
-            include: [{
-                    association: 'Commits',
-                }]
-        }));
+        /*   console.log('////!***', await curCustomer.findOne({
+               where: {},
+               include: [{
+                   association: 'Commits',
+               }]
+           }));*/
         res.status(201).send(commitItem);
     }
     catch (e) {
@@ -90,7 +89,7 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
         reqCurrentPage = '1';
     try {
         /*calculating all*/
-        const amountAll = yield post_1.Post.count({
+        const amountAll = yield post_1.default.count({
             where: {
                 id: {
                     [sequelize_1.Op.gt]: 0
@@ -101,12 +100,14 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
         let offset = amountAll - (parseInt(reqCurrentPage) * PAGE_PAGINATION);
         let limit = offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
         offset = offset < 0 ? 0 : offset;
-        const rows = yield post_1.Post.findAll({
+        const rows = yield post_1.default.findAll({
+            where: {},
+            include: [{
+                    association: 'Commits',
+                }],
             limit: limit,
             offset: offset,
         });
-        /*get commit*/
-        console.log('rows0000-', rows[0] && rows[0]["text"]);
         res.send({
             items: rows,
             loginOfCurrentUser: req.session.customer[0].login,
@@ -124,7 +125,7 @@ exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, fu
     if (!req.session.isAuthenticated)
         return res.send({ error: 'forbidden' });
     try {
-        const allTodos = yield post_1.Post.findAll({
+        const allTodos = yield post_1.default.findAll({
             where: {
                 login: req.session.customer[0].login
             },
@@ -143,17 +144,17 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
         return res.send({ error: 'forbidden' });
     }
     try {
-        const todoItem = post_1.Post.build({
+        const postItem = post_1.default.build({
             id: ++countAllItemsInTodoList,
             checked: req.body.done === 'true',
             text: req.body.text,
+            customer_id: req.session.customer[0].id,
             login: req.session.customer[0].login,
             userName: req.session.customer[0].userName,
             face: req.session.customer[0].face,
-            uuid: (0, uuidv4_1.uuid)(),
         });
-        yield todoItem.save();
-        res.status(201).send(todoItem);
+        yield postItem.save();
+        res.status(201).send(postItem);
     }
     catch (e) {
         console.log(e);
@@ -163,9 +164,10 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
 exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const postIsChanging = yield post_1.Post.findByPk(+req.body.id);
-        /*ckeking if curent user make changing*/
-        if (postIsChanging && postIsChanging.login === req.session.customer[0].login) {
+        const postIsChanging = yield post_1.default.findByPk(+req.body.id);
+        /*ckeking if curent user make changing
+        console.log(postIsChanging.login === req.session.customer[0].login);*/
+        if (postIsChanging) {
             postIsChanging.text = req.body.text;
             postIsChanging.checked = !!req.body.checked;
             postIsChanging.save();
@@ -184,7 +186,7 @@ exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.text
 exports.apiV1Route.delete('/', (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const deleteTodoItem = yield post_1.Post.findAll({
+        const deleteTodoItem = yield post_1.default.findAll({
             where: {
                 id: +req.body.id
             }

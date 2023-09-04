@@ -1,25 +1,9 @@
-import {BuildOptions, DataTypes, Model} from 'sequelize'
+import { DataTypes, Model} from 'sequelize'
 import {sequelize} from '../utils/database';
-import model from "./customer";
-
-export interface IPostModel {
-    id: number;
-    checked: boolean;
-    text: string;
-    editable: boolean;
-    login: string;
-    userName: string;
-    face: number;
-    uuid: string;
+import Commit from "./Commits";
+class Post extends Model {
 }
-
-export interface PostInstance extends Model<IPostModel>, IPostModel {
-}
-
-export type PostsModelStatic = typeof Model & {
-    new(values?: object, options?: BuildOptions): PostInstance;
-};
-export const Post: PostsModelStatic = sequelize.define('PostsList', {
+const model = Post.init({
     id: {
         primaryKey: true,
         autoIncrement: true,
@@ -30,26 +14,16 @@ export const Post: PostsModelStatic = sequelize.define('PostsList', {
     text: {allowNull: false, type: DataTypes.STRING},
     editable: {allowNull: true, type: DataTypes.BOOLEAN},
     customer_id: {type: DataTypes.TINYINT.UNSIGNED},
-    login: {
-        allowNull: false,
-        type: DataTypes.STRING
-    },
-    userName: {
-        allowNull: false,
-        type: DataTypes.STRING
-    },
-    face: {
-        allowNull: true,
-        type: DataTypes.INTEGER.UNSIGNED
-    },
-    uuid: {
-        allowNull: false,
-        unique: true,
-        type: DataTypes.STRING
-    },
-}) as PostsModelStatic
 
-model.hasMany(Post, {as: 'Posts', foreignKey: 'customer_id'});
+    login: {allowNull: false, type: DataTypes.STRING},
+    userName: {allowNull: false, type: DataTypes.STRING},
+    face: {allowNull: true, type: DataTypes.INTEGER.UNSIGNED},
+
+}, {sequelize, tableName: 'PostsList'});
+model.hasMany(Commit, {as: 'Commits', foreignKey: 'post_id'});
 export default model;
 
-/*commitModel.belongsTo(postsModel);*/
+
+
+
+

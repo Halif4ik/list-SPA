@@ -86,11 +86,11 @@
                   v-for="(task, index) in tasks"
                   :login="currentLogin"
                   :key="index">
-                <comit @task_del="deleteTask(task.id)" :data="task" v-bind:index="index+1"
+<!--                <comit @task_del="deleteTask(task.id)" :data="task" v-bind:index="index+1"
                        v-for="(task, index) in tasks"
                        :key="index">
 
-                </comit>
+                </comit>-->
             </task>
 
             <div class="wrapper pagination" v-if="pages > 1">
@@ -307,11 +307,11 @@
                 }
             },
             addCommit: function () {
-                console.log('uuid-', this.checkedTask.uuid);
+                console.log('post_id-', this.checkedTask.id);
                 if (this.new_comit.text.trim() !== '') {
                     let request = JSON.stringify({
                         text: this.new_comit.text,
-                        parentUuid: this.checkedTask.uuid,
+                        post_id: this.checkedTask.id,
                         _csrf: this._csrf
                     });
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
