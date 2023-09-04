@@ -1,6 +1,6 @@
 import {BuildOptions, DataTypes, Model} from 'sequelize'
 import {sequelize} from '../utils/database';
-import {commitModel} from "./Commits";
+import model from "./customer";
 
 export interface IPostModel {
     id: number;
@@ -15,6 +15,7 @@ export interface IPostModel {
 
 export interface PostInstance extends Model<IPostModel>, IPostModel {
 }
+
 export type PostsModelStatic = typeof Model & {
     new(values?: object, options?: BuildOptions): PostInstance;
 };
@@ -25,18 +26,10 @@ export const Post: PostsModelStatic = sequelize.define('PostsList', {
         allowNull: false,
         type: DataTypes.SMALLINT.UNSIGNED
     },
-    checked: {
-        allowNull: false,
-        type: DataTypes.BOOLEAN
-    },
-    text: {
-        allowNull: false,
-        type: DataTypes.STRING
-    },
-    editable: {
-        allowNull: true,
-        type: DataTypes.BOOLEAN
-    },
+    checked: {allowNull: false, type: DataTypes.BOOLEAN},
+    text: {allowNull: false, type: DataTypes.STRING},
+    editable: {allowNull: true, type: DataTypes.BOOLEAN},
+    customer_id: {type: DataTypes.TINYINT.UNSIGNED},
     login: {
         allowNull: false,
         type: DataTypes.STRING
@@ -56,5 +49,7 @@ export const Post: PostsModelStatic = sequelize.define('PostsList', {
     },
 }) as PostsModelStatic
 
+model.hasMany(Post, {as: 'Posts', foreignKey: 'customer_id'});
+export default model;
 
 /*commitModel.belongsTo(postsModel);*/

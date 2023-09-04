@@ -28,7 +28,8 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
                 }
             }
         });
-        /*hook*/
+
+        /*old hook*/
         const amountAll: number = await Commit.count({
             where: {
                 id: {
@@ -37,7 +38,6 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
             }
         });
         countAllComents = amountAll;
-
         const commitItem = new Commit({
             id: ++countAllComents,
             customer_id: req.session.customer[0].id,
@@ -45,6 +45,7 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
             parentUuid: req.body.parentUuid
         })
         await commitItem.save();
+        /**/
 
         await Commit.bulkCreate([{
             customer_id: req.session.customer[0].id,
@@ -53,12 +54,12 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
         }])
 
         console.log('********', await curCustomer.getCommits());
-       /* console.log('////!***', await curCustomer.findAll({
-            where: {},
-            include: [{
-                association: 'Commits',
-            }]
-        }));*/
+         console.log('////!***', await curCustomer.findAll({
+             where: {},
+             include: [{
+                 association: 'Commits',
+             }]
+         }));
 
         res.status(201).send(commitItem);
     } catch (e) {

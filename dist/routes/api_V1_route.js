@@ -40,7 +40,7 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
                 }
             }
         });
-        /*hook*/
+        /*old hook*/
         const amountAll = yield Commits_1.default.count({
             where: {
                 id: {
@@ -56,18 +56,19 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
             parentUuid: req.body.parentUuid
         });
         yield commitItem.save();
+        /**/
         yield Commits_1.default.bulkCreate([{
                 customer_id: req.session.customer[0].id,
                 text: req.body.text,
                 parentUuid: req.body.parentUuid
             }]);
         console.log('********', yield curCustomer.getCommits());
-        /* console.log('////!***', await curCustomer.findAll({
-             where: {},
-             include: [{
-                 association: 'Commits',
-             }]
-         }));*/
+        console.log('////!***', yield curCustomer.findAll({
+            where: {},
+            include: [{
+                    association: 'Commits',
+                }]
+        }));
         res.status(201).send(commitItem);
     }
     catch (e) {

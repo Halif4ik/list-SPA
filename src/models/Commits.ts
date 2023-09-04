@@ -3,7 +3,6 @@ import {sequelize} from '../utils/database';
 
 class Commit extends Model {
 }
-
 const model = Commit.init({
     id: {
         primaryKey: true,
@@ -18,5 +17,4 @@ const model = Commit.init({
 export default model;
 
 /*Coment.postsModel = postsModel.hasMany(Coments);*/
-
 /*postsModel.hasMany(commitModel, {foreignKey: 'uuid'});*/

@@ -31,47 +31,6 @@ async function up(queryInterface, {DataTypes}) {
         uuid: {allowNull: false, unique: true, type: DataTypes.STRING},
     });
 
-    await queryInterface.createTable('skills', {
-        id: {
-            type: DataTypes.BIGINT(20).UNSIGNED,
-            primaryKey: true,
-            autoIncrement: true
-        },
-        name: {type: DataTypes.STRING(255), allowNull: false}
-    });
-
-    await queryInterface.createTable('users_details', {
-        user_id: {
-            type: DataTypes.BIGINT(20).UNSIGNED,
-            primaryKey: true,
-            unique: true
-        },
-        position: {type: DataTypes.STRING(255), allowNull: false},
-        salary: {type: DataTypes.STRING(255), allowNull: false},
-        english_level: {type: DataTypes.STRING(255), allowNull: false},
-    });
-    await queryInterface.createTable('users_ref_skills', {
-        user_id: {
-            type: DataTypes.BIGINT(20).UNSIGNED,
-            primaryKey: true
-        },
-        skill_id: {
-            type: DataTypes.BIGINT(20).UNSIGNED,
-            primaryKey: true
-        },
-        years: {type: DataTypes.INTEGER.UNSIGNED}
-    });
-    await queryInterface.createTable('projects_refs_skills', {
-        project_id: {
-            type: DataTypes.BIGINT(20).UNSIGNED,
-            primaryKey: true
-        },
-        skill_id: {
-            type: DataTypes.BIGINT(20).UNSIGNED,
-            primaryKey: true
-        },
-        years: {type: DataTypes.INTEGER.UNSIGNED}
-    });
 
     await queryInterface.addConstraint('posts', {
         fields: ['user_id'],
@@ -97,46 +56,11 @@ async function up(queryInterface, {DataTypes}) {
         onDelete: 'cascade',
         onUpdate: 'cascade'
     });
-    await queryInterface.addConstraint('users_ref_skills', {
-        fields: ['user_id'],
-        type: 'foreign key',
-        name: 'users_ref_skills_users',
-        references: {table: 'customers', field: 'id'},
-        onDelete: 'cascade',
-        onUpdate: 'cascade'
-    });
-    await queryInterface.addConstraint('users_ref_skills', {
-        fields: ['skill_id'],
-        type: 'foreign key',
-        name: 'users_ref_skills_skills',
-        references: {table: 'skills', field: 'id'},
-        onDelete: 'cascade',
-        onUpdate: 'cascade'
-    });
-    await queryInterface.addConstraint('projects_refs_skills', {
-        fields: ['project_id'],
-        type: 'foreign key',
-        name: 'projects_refs_skills_projects',
-        references: {table: 'posts', field: 'id'},
-        onDelete: 'cascade',
-        onUpdate: 'cascade'
-    });
-    await queryInterface.addConstraint('projects_refs_skills', {
-        fields: ['skill_id'],
-        type: 'foreign key',
-        name: 'projects_refs_skills_skills',
-        references: {table: 'skills', field: 'id'},
-        onDelete: 'cascade',
-        onUpdate: 'cascade'
-    });
 }
 
 export
 async function down(queryInterface) {
-    await queryInterface.dropTable('projects_refs_skills');
-    await queryInterface.dropTable('users_ref_skills');
     await queryInterface.dropTable('users_details');
-    await queryInterface.dropTable('skills');
     await queryInterface.dropTable('posts');
     await queryInterface.dropTable('customers');
 }

@@ -22,9 +22,10 @@ const model = Customer.init({
     sequelize: sequelize,
     tableName: 'customer_list',
 });
-export default model;
-
 model.hasMany(Commit, {as: 'Commits', foreignKey: 'customer_id'});
+/*model.hasMany(Post, {as: 'Posts', foreignKey: 'customer_id'});*/
+
+export default model;
 
 /*model.hasMany(Commits, {as: 'Commits', foreignKey: 'commit_id'});*/
 /*model.hasMany(Project, {as: 'Projects', foreignKey: 'user_id'});*/
