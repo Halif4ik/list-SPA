@@ -1,5 +1,7 @@
 import {DataTypes, Model} from 'sequelize'
 import {sequelize} from '../utils/database';
+import Customer from "./customer";
+import Post from "./post";
 
 class Commit extends Model {
 }
@@ -14,7 +16,6 @@ const model = Commit.init({
     text: {allowNull: false, type: DataTypes.STRING},
 }, {sequelize, tableName: 'ComentsList'});
 
+/*model.belongsTo(Post, { foreignKey: 'post_id' });*/
+/*model.belongsTo(Customer, { foreignKey: 'customer_id' });*/
 export default model;
-
-/*Coment.postsModel = postsModel.hasMany(Coments);*/
-/*postsModel.hasMany(commitModel, {foreignKey: 'uuid'});*/

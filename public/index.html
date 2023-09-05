@@ -85,14 +85,12 @@
                   v-bind:index="index+1"
                   v-for="(task, index) in tasks"
                   :login="currentLogin"
-                  :key="index">
-<!--                <comit @task_del="deleteTask(task.id)" :data="task" v-bind:index="index+1"
-                       v-for="(task, index) in tasks"
-                       :key="index">
+                  :key="index"></task>
+            <!--                <comit @task_del="deleteTask(task.id)" :data="task" v-bind:index="index+1"
+                                   v-for="(task, index) in tasks"
+                                   :key="index">
 
-                </comit>-->
-            </task>
-
+                            </comit>-->
             <div class="wrapper pagination" v-if="pages > 1">
                 <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx }}</button>
             </div>
@@ -301,7 +299,7 @@
                                 this.getTasks();
                                 this.$set(this.new_task, 'text', '');
                             } else {
-                                alert("Произошла ошибка. Посмотрите консоль разработчика чтоб увидеть подробности.")
+                                alert("Произошла ошибка. При создании поста.")
                             }
                         });
                 }

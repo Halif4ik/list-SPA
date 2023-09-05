@@ -6,6 +6,8 @@ import {
     passwordValidInBodyMiddleware,
 } from "../midleware/validator";
 import Tokens from 'csrf';
+import Commit from "../models/Commits";
+import Post from "../models/post";
 import Customer from "../models/customer";
 
 const {SEND_GRID_API_KEY, BASE_URL, HOST_EMAIL} = require('../constants');
@@ -88,7 +90,7 @@ apiV1LoginRegisRoute.post('/logout', async (req: Request, res: Response) => {
 /*register*/
 apiV1LoginRegisRoute.post('/register', emailValidMiddleware(), passwordValidInBodyMiddleware(), homePValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
         const {login, pass, userName, homePage} = req.body;
-        const registeredCustomer: CustomerInstance[] = await Customer.findAll({
+        const registeredCustomer = await Customer.findAll({
             where: {
                 login: login
             }

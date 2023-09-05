@@ -1,6 +1,7 @@
 import { DataTypes, Model} from 'sequelize'
 import {sequelize} from '../utils/database';
 import Commit from "./Commits";
+import Customer from "../models/customer";
 class Post extends Model {
 }
 const model = Post.init({
@@ -14,13 +15,19 @@ const model = Post.init({
     text: {allowNull: false, type: DataTypes.STRING},
     editable: {allowNull: true, type: DataTypes.BOOLEAN},
     customer_id: {type: DataTypes.TINYINT.UNSIGNED},
-
+  /*  creator: {
+        login: {allowNull: false, type: DataTypes.STRING},
+        userName: {allowNull: false, type: DataTypes.STRING},
+        face: {allowNull: true, type: DataTypes.INTEGER.UNSIGNED},
+    },*/
     login: {allowNull: false, type: DataTypes.STRING},
     userName: {allowNull: false, type: DataTypes.STRING},
     face: {allowNull: true, type: DataTypes.INTEGER.UNSIGNED},
 
 }, {sequelize, tableName: 'PostsList'});
+
 model.hasMany(Commit, {as: 'Commits', foreignKey: 'post_id'});
+/*model.belongsTo(Customer, {targetKey: 'id'});*/
 export default model;
 
 

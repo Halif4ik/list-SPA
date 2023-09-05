@@ -10,7 +10,6 @@ import {Op} from "sequelize";
 const {PAGE_PAGINATION} = require('../constants');
 
 export const apiV1Route = Router({});
-let countAllItemsInTodoList = 0;
 
 /*create COMENT for Post*/
 apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
@@ -19,46 +18,29 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
         return res.send({error: 'forbidden'});
     }
     try {
-        let curCustomer: Customer | null = await Customer.findOne({
+        /*let curCustomer: Customer | null = await Customer.findOne({
             where: {
                 id: {
                     [Op.eq]: req.session.customer[0].id
                 }
             }
         });
-        /*old hook
-        const amountAll: number = await Commit.count({
-            where: {
-                id: {
-                    [Op.gt]: 0
-                }
-            }
-        });
-        countAllComents = amountAll;
-        const commitItem: Commit = new Commit({
-            id: ++countAllComents,
-            customer_id: req.session.customer[0].id,
-            text: req.body.text,
-            parentUuid: req.body.parentUuid
-        })
-        await commitItem.save();
-        */
-
+        console.log('++++++++', await curCustomer.getPosts());
+       console.log('********', await curCustomer.getCommits());*/
         const commitItem: Commit = await Commit.bulkCreate([{
             customer_id: req.session.customer[0].id,
             text: req.body.text,
             post_id: req.body.post_id
         }])
 
-        console.log('++++++++', await curCustomer.getPosts());
-        console.log('********', await curCustomer.getCommits());
-        /*   console.log('////!***', await curCustomer.findOne({
-               where: {},
-               include: [{
-                   association: 'Commits',
-               }]
-           }));*/
-
+        const rows = await Customer.findAll({
+            where: {
+                id: req.session.customer[0].id,
+            },
+            include: [{
+                association: 'Posts',
+            }],
+        });
         res.status(201).send(commitItem);
     } catch (e) {
         console.log(e);
@@ -86,11 +68,11 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
                 }
             }
         });
-        countAllItemsInTodoList = amountAll;
         let offset: number = amountAll - (parseInt(reqCurrentPage) * PAGE_PAGINATION);
         let limit = offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
         offset = offset < 0 ? 0 : offset;
-        const rows: Post[] = await Post.findAll({
+        console.log('before-');
+        const posts = await Post.findAll({
             where: {},
             include: [{
                 association: 'Commits',
@@ -99,8 +81,26 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
             offset: offset,
         });
 
+        /*kostil add user info in answer*/
+        for (const onePost of posts) {
+            const Commits = onePost['Commits'];
+            for (const currentCommit of Commits) {
+                const customerWichMakeCommit = currentCommit?.customer_id;
+                const customerInfo = await Customer.findAll({
+                    where: {
+                        id: customerWichMakeCommit,
+                    },
+                })
+                currentCommit.dataValues['customerInfo'] = {
+                    userName: customerInfo[0].dataValues.userName,
+                    face: customerInfo[0].dataValues.face,
+                }
+            }
+        }
+
+
         res.send({
-            items: rows,
+            items: posts,
             loginOfCurrentUser: req.session.customer[0].login,
             '_csrf': tokenSentToFront,
             amountPage: Math.ceil(amountAll / PAGE_PAGINATION)
@@ -114,7 +114,7 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
 apiV1Route.get('/my', async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
     try {
-        const allTodos: PostInstance[] = await Post.findAll({
+        const allTodos = await Post.findAll({
             where: {
                 login: req.session.customer[0].login
             },
@@ -132,8 +132,7 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
         return res.send({error: 'forbidden'});
     }
     try {
-        const postItem: Post = Post.build({
-            id: ++countAllItemsInTodoList,
+        const postItem: Post[] = await Post.bulkCreate([{
             checked: req.body.done === 'true',
             text: req.body.text,
             customer_id: req.session.customer[0].id,
@@ -141,10 +140,20 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
             login: req.session.customer[0].login,
             userName: req.session.customer[0].userName,
             face: req.session.customer[0].face,
-        });
-        await postItem.save();
+        }])
 
-        res.status(201).send(postItem);
+        /*   const postItem: Post = Post.build({
+               id: ++countAllItemsInTodoList,
+               checked: req.body.done === 'true',
+               text: req.body.text,
+               customer_id: req.session.customer[0].id,
+
+               login: req.session.customer[0].login,
+               userName: req.session.customer[0].userName,
+               face: req.session.customer[0].face,
+           });
+           await postItem.save();*/
+        res.status(201).send(postItem[0]);
     } catch (e) {
         console.log(e);
         res.sendStatus(404)
@@ -176,7 +185,7 @@ apiV1Route.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValid
 /* deleteTask */
 apiV1Route.delete('/', idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
-        const deleteTodoItem: PostInstance[] = await Post.findAll({
+        const deleteTodoItem = await Post.findAll({
             where: {
                 id: +req.body.id
             }

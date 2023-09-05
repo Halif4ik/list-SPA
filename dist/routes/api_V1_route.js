@@ -23,7 +23,6 @@ const csrf_1 = __importDefault(require("csrf"));
 const sequelize_1 = require("sequelize");
 const { PAGE_PAGINATION } = require('../constants');
 exports.apiV1Route = (0, express_1.Router)({});
-let countAllItemsInTodoList = 0;
 /*create COMENT for Post*/
 exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.session.isAuthenticated) {
@@ -31,43 +30,28 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
         return res.send({ error: 'forbidden' });
     }
     try {
-        let curCustomer = yield customer_1.default.findOne({
+        /*let curCustomer: Customer | null = await Customer.findOne({
             where: {
                 id: {
-                    [sequelize_1.Op.eq]: req.session.customer[0].id
+                    [Op.eq]: req.session.customer[0].id
                 }
             }
         });
-        /*old hook
-        const amountAll: number = await Commit.count({
-            where: {
-                id: {
-                    [Op.gt]: 0
-                }
-            }
-        });
-        countAllComents = amountAll;
-        const commitItem: Commit = new Commit({
-            id: ++countAllComents,
-            customer_id: req.session.customer[0].id,
-            text: req.body.text,
-            parentUuid: req.body.parentUuid
-        })
-        await commitItem.save();
-        */
+        console.log('++++++++', await curCustomer.getPosts());
+       console.log('********', await curCustomer.getCommits());*/
         const commitItem = yield Commits_1.default.bulkCreate([{
                 customer_id: req.session.customer[0].id,
                 text: req.body.text,
                 post_id: req.body.post_id
             }]);
-        console.log('++++++++', yield curCustomer.getPosts());
-        console.log('********', yield curCustomer.getCommits());
-        /*   console.log('////!***', await curCustomer.findOne({
-               where: {},
-               include: [{
-                   association: 'Commits',
-               }]
-           }));*/
+        const rows = yield customer_1.default.findAll({
+            where: {
+                id: req.session.customer[0].id,
+            },
+            include: [{
+                    association: 'Posts',
+                }],
+        });
         res.status(201).send(commitItem);
     }
     catch (e) {
@@ -96,11 +80,11 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
                 }
             }
         });
-        countAllItemsInTodoList = amountAll;
         let offset = amountAll - (parseInt(reqCurrentPage) * PAGE_PAGINATION);
         let limit = offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
         offset = offset < 0 ? 0 : offset;
-        const rows = yield post_1.default.findAll({
+        console.log('before-');
+        const posts = yield post_1.default.findAll({
             where: {},
             include: [{
                     association: 'Commits',
@@ -108,8 +92,24 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
             limit: limit,
             offset: offset,
         });
+        /*kostil add user info in answer*/
+        for (const onePost of posts) {
+            const Commits = onePost['Commits'];
+            for (const currentCommit of Commits) {
+                const customerWichMakeCommit = currentCommit === null || currentCommit === void 0 ? void 0 : currentCommit.customer_id;
+                const customerInfo = yield customer_1.default.findAll({
+                    where: {
+                        id: customerWichMakeCommit,
+                    },
+                });
+                currentCommit.dataValues['customerInfo'] = {
+                    userName: customerInfo[0].dataValues.userName,
+                    face: customerInfo[0].dataValues.face,
+                };
+            }
+        }
         res.send({
-            items: rows,
+            items: posts,
             loginOfCurrentUser: req.session.customer[0].login,
             '_csrf': tokenSentToFront,
             amountPage: Math.ceil(amountAll / PAGE_PAGINATION)
@@ -144,17 +144,26 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
         return res.send({ error: 'forbidden' });
     }
     try {
-        const postItem = post_1.default.build({
-            id: ++countAllItemsInTodoList,
-            checked: req.body.done === 'true',
-            text: req.body.text,
-            customer_id: req.session.customer[0].id,
-            login: req.session.customer[0].login,
-            userName: req.session.customer[0].userName,
-            face: req.session.customer[0].face,
-        });
-        yield postItem.save();
-        res.status(201).send(postItem);
+        const postItem = yield post_1.default.bulkCreate([{
+                checked: req.body.done === 'true',
+                text: req.body.text,
+                customer_id: req.session.customer[0].id,
+                login: req.session.customer[0].login,
+                userName: req.session.customer[0].userName,
+                face: req.session.customer[0].face,
+            }]);
+        /*   const postItem: Post = Post.build({
+               id: ++countAllItemsInTodoList,
+               checked: req.body.done === 'true',
+               text: req.body.text,
+               customer_id: req.session.customer[0].id,
+
+               login: req.session.customer[0].login,
+               userName: req.session.customer[0].userName,
+               face: req.session.customer[0].face,
+           });
+           await postItem.save();*/
+        res.status(201).send(postItem[0]);
     }
     catch (e) {
         console.log(e);
