@@ -18,15 +18,6 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
         return res.send({error: 'forbidden'});
     }
     try {
-        /*let curCustomer: Customer | null = await Customer.findOne({
-            where: {
-                id: {
-                    [Op.eq]: req.session.customer[0].id
-                }
-            }
-        });
-        console.log('++++++++', await curCustomer.getPosts());
-       console.log('********', await curCustomer.getCommits());*/
         const commitItem: Commit = await Commit.bulkCreate([{
             customer_id: req.session.customer[0].id,
             text: req.body.text,
@@ -56,8 +47,10 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
     const secret: string | undefined = req.session.secretForCustomer;
     if (secret) tokenSentToFront = await tokens.create(secret);
 
-    let reqCurrentPage: string | any = req.query.action;
-    if (typeof reqCurrentPage !== 'string') reqCurrentPage = '1'
+    let reqCurrentPage: string | any = req.query.page;
+    if (isNaN(parseInt(reqCurrentPage))) reqCurrentPage = '1'
+    const revert: string | any = req.query.revert;
+    const order = revert === 'true' ? 'ASC' : 'DESC';
 
     try {
         /*calculating all*/
@@ -68,17 +61,17 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
                 }
             }
         });
-        let offset: number = amountAll - (parseInt(reqCurrentPage) * PAGE_PAGINATION);
-        let limit = offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
-        offset = offset < 0 ? 0 : offset;
-        console.log('before-');
+
         const posts = await Post.findAll({
             where: {},
             include: [{
                 association: 'Commits',
             }],
-            limit: limit,
-            offset: offset,
+            order: [
+                ['id', order],
+            ],
+            limit: PAGE_PAGINATION,
+            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage)-1),
         });
 
         /*kostil add user info in answer*/
@@ -98,7 +91,6 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
             }
         }
 
-
         res.send({
             items: posts,
             loginOfCurrentUser: req.session.customer[0].login,
@@ -113,18 +105,52 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
 /*getAll for only Current User*/
 apiV1Route.get('/my', async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
+    let reqCurrentPage: string | any = req.query.page;
+    if (isNaN(parseInt(reqCurrentPage))) reqCurrentPage = '1'
+
+    const reqRevert: string | any = req.query.revert;
+    const order = reqRevert === 'true' ? 'ASC' : 'DESC';
+
     try {
-        const allTodos = await Post.findAll({
+        const myPosts = await Post.findAll({
             where: {
                 login: req.session.customer[0].login
             },
+            include: [{
+                association: 'Commits',
+            }],
+            order: [
+                ['createdAt', order],
+            ],
+            limit: PAGE_PAGINATION,
+            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage)-1),
         });
-        res.send({items: allTodos});
+
+        /*kostil add user info in answer*/
+        for (const onePost of myPosts) {
+            const Commits = onePost['Commits'];
+            for (const currentCommit of Commits) {
+                const customerWichMakeCommit = currentCommit?.customer_id;
+                const customerInfo = await Customer.findAll({
+                    where: {
+                        id: customerWichMakeCommit,
+                    },
+                })
+                currentCommit.dataValues['customerInfo'] = {
+                    userName: customerInfo[0].dataValues.userName,
+                    face: customerInfo[0].dataValues.face,
+                }
+            }
+        }
+
+        res.send({items: myPosts});
+
     } catch (e) {
         console.log(e);
         res.sendStatus(404)
     }
 });
+
 /*create new Post*/
 apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) {
@@ -142,17 +168,6 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
             face: req.session.customer[0].face,
         }])
 
-        /*   const postItem: Post = Post.build({
-               id: ++countAllItemsInTodoList,
-               checked: req.body.done === 'true',
-               text: req.body.text,
-               customer_id: req.session.customer[0].id,
-
-               login: req.session.customer[0].login,
-               userName: req.session.customer[0].userName,
-               face: req.session.customer[0].face,
-           });
-           await postItem.save();*/
         res.status(201).send(postItem[0]);
     } catch (e) {
         console.log(e);
@@ -164,8 +179,6 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
 apiV1Route.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const postIsChanging = await Post.findByPk(+req.body.id);
-        /*ckeking if curent user make changing
-        console.log(postIsChanging.login === req.session.customer[0].login);*/
 
         if (postIsChanging) {
             postIsChanging.text = req.body.text;
@@ -196,6 +209,14 @@ apiV1Route.delete('/', idValid(), checkValidationInMiddleWare, async (req: Reque
         console.log(e);
         res.sendStatus(400).send({'bad': false} as IResult)
     }
+    /*let curCustomer: Customer | null = await Customer.findOne({
+            where: {
+                id: {
+                    [Op.eq]: req.session.customer[0].id
+                }
+            }
+        });
+       console.log('********', await curCustomer.getCommits());*/
 })
 
 interface IResult {

@@ -30,15 +30,6 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
         return res.send({ error: 'forbidden' });
     }
     try {
-        /*let curCustomer: Customer | null = await Customer.findOne({
-            where: {
-                id: {
-                    [Op.eq]: req.session.customer[0].id
-                }
-            }
-        });
-        console.log('++++++++', await curCustomer.getPosts());
-       console.log('********', await curCustomer.getCommits());*/
         const commitItem = yield Commits_1.default.bulkCreate([{
                 customer_id: req.session.customer[0].id,
                 text: req.body.text,
@@ -68,9 +59,11 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
     const secret = req.session.secretForCustomer;
     if (secret)
         tokenSentToFront = yield tokens.create(secret);
-    let reqCurrentPage = req.query.action;
-    if (typeof reqCurrentPage !== 'string')
+    let reqCurrentPage = req.query.page;
+    if (isNaN(parseInt(reqCurrentPage)))
         reqCurrentPage = '1';
+    const revert = req.query.revert;
+    const order = revert === 'true' ? 'ASC' : 'DESC';
     try {
         /*calculating all*/
         const amountAll = yield post_1.default.count({
@@ -80,17 +73,16 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
                 }
             }
         });
-        let offset = amountAll - (parseInt(reqCurrentPage) * PAGE_PAGINATION);
-        let limit = offset < 0 ? PAGE_PAGINATION + offset : PAGE_PAGINATION;
-        offset = offset < 0 ? 0 : offset;
-        console.log('before-');
         const posts = yield post_1.default.findAll({
             where: {},
             include: [{
                     association: 'Commits',
                 }],
-            limit: limit,
-            offset: offset,
+            order: [
+                ['id', order],
+            ],
+            limit: PAGE_PAGINATION,
+            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage) - 1),
         });
         /*kostil add user info in answer*/
         for (const onePost of posts) {
@@ -124,13 +116,42 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
 exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.session.isAuthenticated)
         return res.send({ error: 'forbidden' });
+    let reqCurrentPage = req.query.page;
+    if (isNaN(parseInt(reqCurrentPage)))
+        reqCurrentPage = '1';
+    const reqRevert = req.query.revert;
+    const order = reqRevert === 'true' ? 'ASC' : 'DESC';
     try {
-        const allTodos = yield post_1.default.findAll({
+        const myPosts = yield post_1.default.findAll({
             where: {
                 login: req.session.customer[0].login
             },
+            include: [{
+                    association: 'Commits',
+                }],
+            order: [
+                ['createdAt', order],
+            ],
+            limit: PAGE_PAGINATION,
+            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage) - 1),
         });
-        res.send({ items: allTodos });
+        /*kostil add user info in answer*/
+        for (const onePost of myPosts) {
+            const Commits = onePost['Commits'];
+            for (const currentCommit of Commits) {
+                const customerWichMakeCommit = currentCommit === null || currentCommit === void 0 ? void 0 : currentCommit.customer_id;
+                const customerInfo = yield customer_1.default.findAll({
+                    where: {
+                        id: customerWichMakeCommit,
+                    },
+                });
+                currentCommit.dataValues['customerInfo'] = {
+                    userName: customerInfo[0].dataValues.userName,
+                    face: customerInfo[0].dataValues.face,
+                };
+            }
+        }
+        res.send({ items: myPosts });
     }
     catch (e) {
         console.log(e);
@@ -152,17 +173,6 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
                 userName: req.session.customer[0].userName,
                 face: req.session.customer[0].face,
             }]);
-        /*   const postItem: Post = Post.build({
-               id: ++countAllItemsInTodoList,
-               checked: req.body.done === 'true',
-               text: req.body.text,
-               customer_id: req.session.customer[0].id,
-
-               login: req.session.customer[0].login,
-               userName: req.session.customer[0].userName,
-               face: req.session.customer[0].face,
-           });
-           await postItem.save();*/
         res.status(201).send(postItem[0]);
     }
     catch (e) {
@@ -174,8 +184,6 @@ exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.tex
 exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const postIsChanging = yield post_1.default.findByPk(+req.body.id);
-        /*ckeking if curent user make changing
-        console.log(postIsChanging.login === req.session.customer[0].login);*/
         if (postIsChanging) {
             postIsChanging.text = req.body.text;
             postIsChanging.checked = !!req.body.checked;
@@ -207,5 +215,13 @@ exports.apiV1Route.delete('/', (0, validator_1.idValid)(), validator_1.checkVali
         console.log(e);
         res.sendStatus(400).send({ 'bad': false });
     }
+    /*let curCustomer: Customer | null = await Customer.findOne({
+            where: {
+                id: {
+                    [Op.eq]: req.session.customer[0].id
+                }
+            }
+        });
+       console.log('********', await curCustomer.getCommits());*/
 }));
 //# sourceMappingURL=api_V1_route.js.map

@@ -91,9 +91,11 @@ h3 {
     background-color: rgba(255, 181, 60, 0.9);
     text-align: center;
     color: white;
+    font-size: 19px;
+    border-radius: 3%;
 }
 .my_coment_button {
-    width: fit-content%;
+    width: fit-content;
     padding: 6px;
     background-color: rgba(255, 181, 60, 0.9);
     text-align: center;
@@ -272,4 +274,27 @@ hr {
 }
 .LoginInput .errorMsg.user-name{
     top: 245px;
+}
+
+.wrapper .task .commits-section{
+    margin-left: 50px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 2px 5px;
+    flex-wrap: nowrap;
+    border: 2px solid rgba(0, 0, 0, .08);
+}
+.wrapper .task .commits-section .contentText{
+    padding: 0px 5px;
+}
+.wrapper div> label{
+    display: flex;
+    justify-content: space-between;
+}
+.wrapper div> label Input  {
+    width: 80% !important;
+}
+.wrapper div> label SPAN  {
+    width: 15%;
 }

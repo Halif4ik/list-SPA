@@ -31,6 +31,7 @@
                 Версия АПИ
                 <button @click="apiVersion='v1'" :class="{'selected': apiVersion === 'v1'}">v1</button>
             </div>
+
             <div>
                 <button @click="getTasks()" class="primary">Поехали</button>
             </div>
@@ -41,9 +42,8 @@
                 <input v-model.lazy="login" :class="emailValid ? 'validate':'validate invalid'" type="email"
                        :placeholder="ePlaceHolder" autofocus required>
                 <span class="errorMsg" v-if="!this.emailValid">Incorrect format E-mail</span>
-                <input v-model.lazy="pass" class="validate" type="password" placeholder="******" required minlength="6"
-                       maxlength="20">
-                <span class="errorMsg pass" v-if="!this.passValid">Password length min 6</span>
+                <input v-model.lazy="pass" class="validate" type="password" placeholder="******" required>
+                <span class="errorMsg pass" v-if="!this.passValid">Password length min 6, max 20</span>
                 <input v-model.lazy="userName" class="validate" type="text" placeholder="user name" autocomplete="on"
                        required>
                 <span class="errorMsg user-name" v-if="!this.userNameValid">User name length min 1</span>
@@ -55,7 +55,7 @@
             </div>
         </div>
         <div class="wrapper" v-else-if="step === 'items'">
-            <h3>Добавить новую запись:</h3>
+            <h4>Добавить новую запись:</h4>
             <div v-if="posting">
                 <label style="display: flex;">
                     <input @keyup.enter="addTask" class="new_todo" autofocus autocomplete="off"
@@ -70,33 +70,31 @@
                     <input @keyup.enter="addCommit" class="new_todo" value=""
                            placeholder="Create comment for checked post"
                            type="text" v-model="new_comit.text">
-                    <span><button @click="addCommit" @keypress.enter="addCommit" class="button new_todo_button">Коментить</button></span>
+                    <span><button @click="addCommit" @keypress.enter="addCommit"
+                                  class="button new_todo_button orange darken-1">Коментить</button></span>
                 </label>
             </div>
 
-            <h3 class="status_title">{{ 'Все записи: ' + tasks.length }}</h3>
+            <h5 class="status_title">{{ 'Все записи: ' + tasks.length }}</h5>
             <task @task_del="deleteTask(task.id)"
                   @task_edit="editTask(index)"
                   @task_done="markForCommit(index,task)"
                   @save="save(index, task.id)"
                   @disable="disable(index)"
-                  @get_my_tasks="getOnlyMyTasks()"
+                  @get_my_tasks="getTasks(1,'/my')"
                   :data="task"
                   v-bind:index="index+1"
                   v-for="(task, index) in tasks"
                   :login="currentLogin"
                   :key="index"></task>
-            <!--                <comit @task_del="deleteTask(task.id)" :data="task" v-bind:index="index+1"
-                                   v-for="(task, index) in tasks"
-                                   :key="index">
-
-                            </comit>-->
             <div class="wrapper pagination" v-if="pages > 1">
                 <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx }}</button>
             </div>
 
             <hr>
             <button @click="logout" class="logout btn btm-small js-remove">Выйти &#128682;</button>
+            <button @click="setRevert(true)" class="logout btn btm-small js-remove">Revert</button>
+            <button @click="setRevert(false)" class="logout btn btm-small js-remove">Normal</button>
         </div>
         <div class="wrapper" v-else-if="step === 'error'">
             Произошла ошибка. Откройте консоль разработчика чтоб увидеть подробности.
@@ -106,6 +104,18 @@
 <script>
     Vue.component("task", {
         props: ["data", "index", "login"],
+        methods: {
+            formatDate(value) {
+                const options = {
+                    day: '2-digit',
+                    month: 'long',
+                    year: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                };
+                return new Intl.DateTimeFormat('ru-RU', options).format(new Date(value));
+            },
+        },
         template: `
           <div class="task" v-bind:class="{ taskCompleted: data.checked}">
           <div class="contentText">
@@ -115,9 +125,7 @@
                 <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
               </button>
               <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
-              <span class="task_head">
-                   <strong>{{ data.userName }}</strong> {{ data.createdAt }}
-                </span>
+              <span class="task_head"><strong>{{ data.userName }}</strong> {{ formatDate(data.createdAt) }}</span>
             </div>
             <div v-if="login == data.login">
               <div class="button check" v-if="!data.editable">
@@ -134,6 +142,17 @@
           <div class="task_content" v-if="!data.editable"> {{ data.text }}</div>
           <div v-else>
             {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus class="edit-input"/>
+          </div>
+
+          <div v-if="data.Commits.length > 0" class="commits-section">
+            <div v-for="(commit, commitIndex) in data.Commits" :key="commitIndex" class="commit">
+              <div class="contentText">
+                <a class="task_face">{{ String.fromCodePoint(commit.customerInfo.face) }}</a>
+                <span class="task_head"><strong>{{ commit.customerInfo.userName }}</strong>
+                  {{ formatDate(commit.createdAt) }}</span>
+              </div>
+              <div class="task_content"> {{ commit.text }}</div>
+            </div>
           </div>
           </div>
         `
@@ -170,12 +189,8 @@
             emailValid: true,
             userNameValid: true,
             passValid: true,
-        },
-
-        computed: {
-            /*isEmailValid() {
-                return this.emailValid;
-            },*/
+            currentPage: 1,
+            revert: false,
         },
         watch: {
             login(value) {
@@ -189,44 +204,15 @@
             },
         },
         methods: {
-            getOnlyMyTasks: function () {
+            getTasks: function (numberPage = 1, my = '') {
+                this.currentPage = numberPage;
+                const revert = this.revert;
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
-                const qs = {action: this.apiVersion === 'v1' ? '' : 'getItems'};
-
-                fetch(this.apiURL + this.apiVersion + route + '/my' + '?' + new URLSearchParams(qs), {
-                    credentials: 'include',
-                    method: this.apiVersion === 'v1' ? 'GET' : 'POST',
-                })
-                    .then(res => res.json())
-                    .then((response) => {
-                        if (response.error === 'forbidden') {
-                            this.step = 'login';
-                        } else {
-                            this.tasks = response.items.sort(function (oneCommit, secCommit) {
-                                return Date.parse(secCommit.createdAt) - Date.parse(oneCommit.createdAt);
-                            });
-                            this.tasks = this.tasks.map((item) => {
-                                item.editable = false;
-                                item.createdAt = Intl.DateTimeFormat('ru-RU', {
-                                    day: '2-digit',
-                                    month: 'long',
-                                    year: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                }).format(new Date(item.createdAt));
-                                return item;
-                            });
-                            this.step = 'items';
-                        }
-                    }).catch((error) => {
-                    this.step = 'error';
-                })
-            },
-            getTasks: function (numberPage = 1) {
-                const route = this.apiVersion === 'v1' ? '/items' : '/router';
-                const qs = {action: this.apiVersion === 'v1' ? numberPage : 'getItems'};
-                /*http://localhost:3001/api/v1/items?action=1*/
-                fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
+                const qs = {
+                    page: this.apiVersion === 'v1' ? numberPage : 'getItems',
+                    revert,
+                };
+                fetch(this.apiURL + this.apiVersion + route + my + '?' + new URLSearchParams(qs), {
                     credentials: 'include',
                     method: this.apiVersion === 'v1' ? 'GET' : 'POST',
                 })
@@ -238,23 +224,11 @@
                             this._csrf = response['_csrf'];
                             this.pages = parseInt(response['amountPage']) || 0;
                             this.currentLogin = response['loginOfCurrentUser'];
-                            /*sorting*/
-                            this.tasks = response.items.sort(function (oneCommit, secCommit) {
-                                return Date.parse(secCommit.createdAt) - Date.parse(oneCommit.createdAt);
-                            });
-                            /*formatting time*/
-                            this.tasks = this.tasks.map((item) => {
+                            this.tasks = response.items;
+                            this.tasks = this.tasks.map(item => {
                                 item.editable = false;
-                                item.createdAt = Intl.DateTimeFormat('ru-RU', {
-                                    day: '2-digit',
-                                    month: 'long',
-                                    year: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                }).format(new Date(item.createdAt));
-                                return item;
-                            });
-
+                                return item
+                            })
                             this.step = 'items';
                         }
                     }).catch((error) => {
@@ -305,7 +279,7 @@
                 }
             },
             addCommit: function () {
-                console.log('post_id-', this.checkedTask.id);
+
                 if (this.new_comit.text.trim() !== '') {
                     let request = JSON.stringify({
                         text: this.new_comit.text,
@@ -353,11 +327,15 @@
                     });
             },
             markForCommit(index, task) {
-                console.log('!index-', index);
-                console.log('!task-', task);
-                this.$set(this.tasks[index], 'checked', !this.tasks[index].checked);
-                this.posting = !this.posting;
-                this.checkedTask = task;
+                if (!this.checkedTask) {
+                    this.$set(this.tasks[index], 'checked', !this.tasks[index].checked);
+                    this.posting = !this.posting;
+                    this.checkedTask = task;
+                } else if (this.checkedTask.id === task.id) {
+                    this.$set(this.tasks[index], 'checked', !this.tasks[index].checked);
+                    this.posting = !this.posting;
+                    this.checkedTask = '';
+                }
             },
             editTask(index) {
                 this.$set(this.tasks[index], 'editable', true);
@@ -411,7 +389,7 @@
                             } else if (response.error === 'not found') {
                                 alert('Такая комбинация логина и пароля не найдена');
                             } else {
-                                alert(`Произошла ошибка. ${response.errors[0].msg}.`)
+                                alert(` Произошла ошибка. ${response.errors[0].msg}.`)
                             }
                         })
                 }
@@ -438,10 +416,14 @@
                             if (response.ok) {
                                 this.logIn();
                             } else {
-                                alert(`Произошла ошибка. ${response.errors[0].msg}.`)
+                                alert(`    Произошла ошибка. ${response.errors[0].msg}    .    `)
                             }
                         });
                 }
+            },
+            setRevert(value) {
+                this.revert = value;
+                this.getTasks(this.currentPage);
             },
         },
     });
