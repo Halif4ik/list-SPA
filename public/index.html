@@ -93,8 +93,10 @@
 
             <hr>
             <button @click="logout" class="logout btn btm-small js-remove">Выйти &#128682;</button>
-            <button @click="setRevert(true)" class="logout btn btm-small js-remove">Revert</button>
-            <button @click="setRevert(false)" class="logout btn btm-small js-remove">Normal</button>
+
+            <button v-if="!this.revert" @click="setRevert(true)" class="logout btn btm-small js-remove">Revert</button>
+            <button v-else="this.revert" @click="setRevert(false)" class="logout btn btm-small js-remove">LIFO
+            </button>
         </div>
         <div class="wrapper" v-else-if="step === 'error'">
             Произошла ошибка. Откройте консоль разработчика чтоб увидеть подробности.

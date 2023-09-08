@@ -6,6 +6,7 @@ import Customer from "../models/customer";
 import Post from "../models/post";
 import Tokens from "csrf";
 import {Op} from "sequelize";
+import {upload} from "../midleware/loadFile";
 
 const {PAGE_PAGINATION} = require('../constants');
 
@@ -126,7 +127,7 @@ apiV1Route.get('/my', async (req: Request, res: Response) => {
             offset: PAGE_PAGINATION * (parseInt(reqCurrentPage)-1),
         });
 
-        /*kostil add user info in answer*/
+        /*kostil add user info to response array*/
         for (const onePost of myPosts) {
             const Commits = onePost['Commits'];
             for (const currentCommit of Commits) {
@@ -152,7 +153,7 @@ apiV1Route.get('/my', async (req: Request, res: Response) => {
 });
 
 /*create new Post*/
-apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare,upload.single('attached'), async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
@@ -166,7 +167,13 @@ apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMid
             login: req.session.customer[0].login,
             userName: req.session.customer[0].userName,
             face: req.session.customer[0].face,
-        }])
+        }]);
+      /*  const customerWithNewFilds = {
+            firstName: req.body.name.trim() || registeredCustomer.firstName,
+            img: req.file && req.file.path || registeredCustomer.img
+        }*/
+        console.log("req.file-",req.file);
+
 
         res.status(201).send(postItem[0]);
     } catch (e) {

@@ -135,7 +135,7 @@ exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, fu
             limit: PAGE_PAGINATION,
             offset: PAGE_PAGINATION * (parseInt(reqCurrentPage) - 1),
         });
-        /*kostil add user info in answer*/
+        /*kostil add user info to response array*/
         for (const onePost of myPosts) {
             const Commits = onePost['Commits'];
             for (const currentCommit of Commits) {
