@@ -1,5 +1,6 @@
 import {body, validationResult} from 'express-validator'
 import {NextFunction, Request, Response} from "express";
+import multer from "multer";
 
 export function idValid() {
     return body('id').trim().isLength({min: 1}).isNumeric().withMessage("Id should be Number");

@@ -16,11 +16,8 @@ const model = Post.init({
     editable: {allowNull: true, type: DataTypes.BOOLEAN},
     customer_id: {type: DataTypes.TINYINT.UNSIGNED},
   /*  creator: {
-        login: {allowNull: false, type: DataTypes.STRING},
-        userName: {allowNull: false, type: DataTypes.STRING},
-        face: {allowNull: true, type: DataTypes.INTEGER.UNSIGNED},
-    },*/
-    login: {allowNull: false, type: DataTypes.STRING},
+    attachedFile: {allowNull: true, type: DataTypes.STRING},*/
+    login: {allowNull: true, type: DataTypes.STRING},
     userName: {allowNull: false, type: DataTypes.STRING},
     face: {allowNull: true, type: DataTypes.INTEGER.UNSIGNED},
 
@@ -28,6 +25,7 @@ const model = Post.init({
 
 model.hasMany(Commit, {as: 'Commits', foreignKey: 'post_id'});
 /*model.belongsTo(Customer, {targetKey: 'id'});*/
+/*model.belongsTo(Customer, { as: 'Customer',targetKey: 'id',foreignKey: 'customer_id' });*/
 export default model;
 
 

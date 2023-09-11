@@ -6,7 +6,7 @@ import path from "path";
 import session from "express-session";
 import {sequelize} from "./utils/database";
 import {Model} from "sequelize";
-import {ProductRoutes} from "./routes/prodRout";
+import multer from "multer";
 
 declare module 'express-session' {
     export interface SessionData {
@@ -40,7 +40,6 @@ class App {
             store: sessionStore,
         }));
         this.app.use(bodyParser.urlencoded({extended: true}));
-        this.app.use(express.static(path.join(__dirname, 'public')));
         this.app.use(express.static(path.join(__dirname, '../public')));
         /*exprApp.use( upload.single('attached'));*/
     }

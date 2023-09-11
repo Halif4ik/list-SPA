@@ -47,7 +47,6 @@
                 <input v-model.lazy="userName" class="validate" type="text" placeholder="user name" autocomplete="on"
                        required>
                 <span class="errorMsg user-name" v-if="!this.userNameValid">User name length min 1</span>
-                required>
                 <input v-model="homePage" type="url" placeholder="homePage" autocomplete="on">
             </div>
             <div class="LoginButton">
@@ -263,7 +262,7 @@
                 if (this.new_task.text.trim() !== '') {
                     let formData = new FormData();
                     formData.append("text", this.new_task.text);
-                    formData.append("attached", this.attached);
+                    formData.append("images", this.attached);
                     formData.append("_csrf", this._csrf);
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'createItem'};
@@ -272,9 +271,6 @@
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
                         body: formData,
                         credentials: 'include',
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        },
                     }).then(res => res.json())
                         .then((response) => {
                             if (response.id) {
@@ -435,7 +431,8 @@
             },
             // Handle the file input change event
             fileSelected(event) {
-                this.new_task.attached = event.target.files[0];
+                this.attached = event.target.files[0];
+
             },
         },
     });
