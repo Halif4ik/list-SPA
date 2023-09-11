@@ -46,7 +46,6 @@ class App {
     }
 
     private allRoutes(): void {
-        this.app.use('/api/v1/items', ProductRoutes);
         this.app.use('/api/v1/items', apiV1Route);
         this.app.use('/api/v1', apiV1LoginRegisRoute);
         this.app.use((req: Request, res: Response) => {

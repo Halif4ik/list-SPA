@@ -5,13 +5,18 @@ import Customer from "../models/customer";
 import Post from "../models/post";
 import Tokens from "csrf";
 import {Op} from "sequelize";
-const {PAGE_PAGINATION} = require('../constants');
+
+const {PAGE_PAGINATION} = require('../../constants.js');
 import multer from 'multer';
 
 import express, {NextFunction, Request, Response} from 'express';
+import * as fs from "fs";
+
 const router = express.Router();
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
+        const dir = '../public';
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir);
         cb(null, '../public')
     },
     filename: function (req: any, file: any, cb: any) {
@@ -28,10 +33,10 @@ const fileFilter = (req: any, file: any, cb: any) => {
 const upload = multer({storage: storage, fileFilter: fileFilter});
 
 /*create new Post*/
-router.post('/', upload.array('images', 5), async (req: Request, res: Response) => {
-    console.log('!!!!req.body-',req.body);
-    console.log('1111req.file-',req.file);
-    console.log('files-',req.files);
+router.post('/', upload.array('images', 5), async (req: Request, res: Response, next: NextFunction) => {
+    console.log('!!!!req.body-', req.body);
+    console.log('1111req.file-', req.file);
+    console.log('files-', req.files);
 
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
@@ -88,6 +93,7 @@ router.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInM
 });
 /*getAll*/
 router.get('/', async (req: Request, res: Response) => {
+    console.log("log!!!");
     if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
     const tokens: Tokens = new Tokens();
     let tokenSentToFront;
@@ -241,6 +247,7 @@ router.delete('/', idValid(), checkValidationInMiddleWare, async (req: Request, 
         });
        console.log('********', await curCustomer.getCommits());*/
 })
+
 interface IResult {
     [key: string]: boolean
 }

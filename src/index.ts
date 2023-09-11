@@ -1,24 +1,15 @@
-import express, {Express, Request, Response} from 'express';
-import path from 'node:path';
-import bodyParser from "body-parser";
-import {apiV1Route} from "./routes/api_V1_route";
-import {apiV1LoginRegisRoute} from "./routes/api_V1_login";
-import {sequelize} from './utils/database';
-import {Model} from "sequelize";
-import session from 'express-session';
-
-const {upload} = require('./midleware/loadFile');
-
-const port = process.env.PORT || 3001
 import exprApp from './app';
+import {sequelize} from './utils/database';
+/*import mongoose from 'mongoose';
+mongoose.connect("mongodb://localhost:27017/multer", {useNewUrlParser: true})
+    .then(() => console.log("Successfully connected to the following database"))
+    .catch((err:Error) => {
+        console.log(err);
+    });*/
 
-try {
-    /*if (await sequelize.authenticate()) console.log('Connection has been established successfully.')*/
-    sequelize.sync({force: false}).then(() => {
-        exprApp.listen(port)
+const port  = process.env.PORT || 3001;
+sequelize.sync({force: false}).then(() => {
+    const server = exprApp.listen(port, ()=> {
+        console.log(`Server is running on port: ${port}`);
     });
-
-} catch (e) {
-    console.log(e);
-}
-
+});
