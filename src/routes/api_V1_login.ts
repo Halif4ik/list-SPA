@@ -1,4 +1,5 @@
-import {Request, Response, Router} from "express";
+import express, {NextFunction, Request, Response} from 'express';
+const router = express.Router();
 import {
     checkValidationInMiddleWare,
     emailValidMiddleware,
@@ -15,7 +16,6 @@ const bcrypt = require('bcryptjs');
 /*import {bcrypt} from 'bcryptjs';*/
 const nodemailer = require('nodemailer');
 const sgTransport = require('nodemailer-sendgrid-transport');
-export const apiV1LoginRegisRoute = Router({});
 
 const mailer = nodemailer.createTransport(sgTransport({
     auth: {
@@ -25,7 +25,7 @@ const mailer = nodemailer.createTransport(sgTransport({
 let arrHexsFaces = ['👩‍🦰'.codePointAt(0), '👨‍🦲'.codePointAt(0), '👲'.codePointAt(0), `👧`.codePointAt(0)];
 
 /*Login*/
-apiV1LoginRegisRoute.post('/login', emailValidMiddleware(), passwordValidInBodyMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.post('/login', emailValidMiddleware(), passwordValidInBodyMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const {login, pass} = req.body;
         const registeredCustomer = await Customer.findAll({
@@ -63,7 +63,7 @@ apiV1LoginRegisRoute.post('/login', emailValidMiddleware(), passwordValidInBodyM
 
 });
 /*logout*/
-apiV1LoginRegisRoute.post('/logout', async (req: Request, res: Response) => {
+router.post('/logout', async (req: Request, res: Response) => {
     try {
         const registeredCustomer = req.session.customer
         /*console.log('!!instanceof---',  req.session.customer instanceof (Model<CustomerModelStatic>));*/
@@ -88,7 +88,7 @@ apiV1LoginRegisRoute.post('/logout', async (req: Request, res: Response) => {
 });
 
 /*register*/
-apiV1LoginRegisRoute.post('/register', emailValidMiddleware(), passwordValidInBodyMiddleware(), homePValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.post('/register', emailValidMiddleware(), passwordValidInBodyMiddleware(), homePValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
         const {login, pass, userName, homePage} = req.body;
         const registeredCustomer = await Customer.findAll({
             where: {
@@ -137,4 +137,5 @@ interface IResult {
     [key: string]: boolean
 }
 
+export {router as apiV1LoginRegisRoute};
 

@@ -1,19 +1,12 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.apiV1LoginRegisRoute = void 0;
-const express_1 = require("express");
+const express_1 = __importDefault(require("express"));
+const router = express_1.default.Router();
+exports.apiV1LoginRegisRoute = router;
 const validator_1 = require("../midleware/validator");
 const csrf_1 = __importDefault(require("csrf"));
 const customer_1 = __importDefault(require("../models/customer"));
@@ -22,7 +15,6 @@ const bcrypt = require('bcryptjs');
 /*import {bcrypt} from 'bcryptjs';*/
 const nodemailer = require('nodemailer');
 const sgTransport = require('nodemailer-sendgrid-transport');
-exports.apiV1LoginRegisRoute = (0, express_1.Router)({});
 const mailer = nodemailer.createTransport(sgTransport({
     auth: {
         api_key: SEND_GRID_API_KEY,
@@ -30,17 +22,17 @@ const mailer = nodemailer.createTransport(sgTransport({
 }));
 let arrHexsFaces = ['👩‍🦰'.codePointAt(0), '👨‍🦲'.codePointAt(0), '👲'.codePointAt(0), `👧`.codePointAt(0)];
 /*Login*/
-exports.apiV1LoginRegisRoute.post('/login', (0, validator_1.emailValidMiddleware)(), (0, validator_1.passwordValidInBodyMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/login', (0, validator_1.emailValidMiddleware)(), (0, validator_1.passwordValidInBodyMiddleware)(), validator_1.checkValidationInMiddleWare, async (req, res) => {
     try {
         const { login, pass } = req.body;
-        const registeredCustomer = yield customer_1.default.findAll({
+        const registeredCustomer = await customer_1.default.findAll({
             where: {
                 login: login
             }
         });
         if (!registeredCustomer.length)
             return res.send({ errors: [{ "msg": "Wrong e-mail", }] });
-        const isPass = yield bcrypt.compare(pass, registeredCustomer[0].dataValues.pass);
+        const isPass = await bcrypt.compare(pass, registeredCustomer[0].dataValues.pass);
         if (isPass) {
             req.session.customer = registeredCustomer;
             req.session.isAuthenticated = true;
@@ -48,7 +40,7 @@ exports.apiV1LoginRegisRoute.post('/login', (0, validator_1.emailValidMiddleware
             req.session.face = registeredCustomer[0].dataValues.face;
             const tokens = new csrf_1.default();
             const secret = req.session.secretForCustomer;
-            const tokenSentToFront = yield tokens.create(secret);
+            const tokenSentToFront = await tokens.create(secret);
             req.session.save(err => {
                 if (err) {
                     console.log('Error with login user-', err);
@@ -65,9 +57,9 @@ exports.apiV1LoginRegisRoute.post('/login', (0, validator_1.emailValidMiddleware
         console.log(e);
         res.sendStatus(400).send({ 'bad': false });
     }
-}));
+});
 /*logout*/
-exports.apiV1LoginRegisRoute.post('/logout', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/logout', async (req, res) => {
     try {
         const registeredCustomer = req.session.customer;
         /*console.log('!!instanceof---',  req.session.customer instanceof (Model<CustomerModelStatic>));*/
@@ -89,11 +81,11 @@ exports.apiV1LoginRegisRoute.post('/logout', (req, res) => __awaiter(void 0, voi
         console.log(e);
         res.sendStatus(400).send({ 'bad': false });
     }
-}));
+});
 /*register*/
-exports.apiV1LoginRegisRoute.post('/register', (0, validator_1.emailValidMiddleware)(), (0, validator_1.passwordValidInBodyMiddleware)(), (0, validator_1.homePValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/register', (0, validator_1.emailValidMiddleware)(), (0, validator_1.passwordValidInBodyMiddleware)(), (0, validator_1.homePValid)(), validator_1.checkValidationInMiddleWare, async (req, res) => {
     const { login, pass, userName, homePage } = req.body;
-    const registeredCustomer = yield customer_1.default.findAll({
+    const registeredCustomer = await customer_1.default.findAll({
         where: {
             login: login
         }
@@ -104,18 +96,18 @@ exports.apiV1LoginRegisRoute.post('/register', (0, validator_1.emailValidMiddlew
     }
     /*create secret kay and token for hidden filds in forms*/
     const tokens = new csrf_1.default();
-    const secretForCustomer = yield tokens.secret();
+    const secretForCustomer = await tokens.secret();
     try {
         const emoji = arrHexsFaces[Math.floor(Math.random() * (arrHexsFaces.length - 1))];
-        yield customer_1.default.create({
+        await customer_1.default.create({
             login,
             userName,
             homePage,
             face: emoji,
-            pass: yield bcrypt.hash(pass, 10),
+            pass: await bcrypt.hash(pass, 10),
             csrf: secretForCustomer
         });
-        yield mailer.sendMail({
+        await mailer.sendMail({
             to: [login],
             from: HOST_EMAIL,
             subject: `Hi ${userName} you  are registered on SPA todo-List`,
@@ -133,5 +125,5 @@ exports.apiV1LoginRegisRoute.post('/register', (0, validator_1.emailValidMiddlew
     catch (e) {
         console.log('!!!-', e);
     }
-}));
+});
 //# sourceMappingURL=api_V1_login.js.map

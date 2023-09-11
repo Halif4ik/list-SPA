@@ -1,4 +1,3 @@
-import {Request, Response, Router} from "express";
 import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
 import {isCorrectToken} from "../midleware/iscorectToken";
 import Commit from "../models/Commits";
@@ -6,14 +5,62 @@ import Customer from "../models/customer";
 import Post from "../models/post";
 import Tokens from "csrf";
 import {Op} from "sequelize";
-import {upload} from "../midleware/loadFile";
-
 const {PAGE_PAGINATION} = require('../constants');
+import multer from 'multer';
 
-export const apiV1Route = Router({});
+import express, {NextFunction, Request, Response} from 'express';
+const router = express.Router();
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, '../public')
+    },
+    filename: function (req: any, file: any, cb: any) {
+        cb(null, file.originalname)
+    }
+});
+const fileFilter = (req: any, file: any, cb: any) => {
+    if (file.mimetype === "image/jpg" || file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+        cb(null, true);
+    } else {
+        cb(new Error("Image uploaded is not of type jpg/jpeg or png"), false);
+    }
+}
+const upload = multer({storage: storage, fileFilter: fileFilter});
+
+/*create new Post*/
+router.post('/', upload.array('images', 5), async (req: Request, res: Response) => {
+    console.log('!!!!req.body-',req.body);
+    console.log('1111req.file-',req.file);
+    console.log('files-',req.files);
+
+    if (!req.session.isAuthenticated) {
+        console.log('create new task Error');
+        return res.send({error: 'forbidden'});
+    }
+    try {
+        const postItem: Post[] = await Post.bulkCreate([{
+            checked: req.body.done === 'true',
+            text: req.body.text,
+            customer_id: req.session.customer[0].id,
+
+            login: req.session.customer[0].login,
+            userName: req.session.customer[0].userName,
+            face: req.session.customer[0].face,
+        }]);
+        /*  const customerWithNewFilds = {
+              firstName: req.body.name.trim() || registeredCustomer.firstName,
+              img: req.file && req.file.path || registeredCustomer.img
+          }*/
+
+        res.status(201).send(postItem[0]);
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(404)
+    }
+});
 
 /*create COMENT for Post*/
-apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
@@ -25,7 +72,7 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
             post_id: req.body.post_id
         }])
 
-        const rows = await Customer.findAll({
+        const rows: Costomer[] = await Customer.findAll({
             where: {
                 id: req.session.customer[0].id,
             },
@@ -39,9 +86,8 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
         res.sendStatus(404)
     }
 });
-
 /*getAll*/
-apiV1Route.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
     const tokens: Tokens = new Tokens();
     let tokenSentToFront;
@@ -72,7 +118,7 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
                 ['id', order],
             ],
             limit: PAGE_PAGINATION,
-            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage)-1),
+            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage) - 1),
         });
 
         /*kostil add user info in answer*/
@@ -104,7 +150,7 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
     }
 });
 /*getAll for only Current User*/
-apiV1Route.get('/my', async (req: Request, res: Response) => {
+router.get('/my', async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
     let reqCurrentPage: string | any = req.query.page;
     if (isNaN(parseInt(reqCurrentPage))) reqCurrentPage = '1'
@@ -124,7 +170,7 @@ apiV1Route.get('/my', async (req: Request, res: Response) => {
                 ['createdAt', order],
             ],
             limit: PAGE_PAGINATION,
-            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage)-1),
+            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage) - 1),
         });
 
         /*kostil add user info to response array*/
@@ -152,38 +198,8 @@ apiV1Route.get('/my', async (req: Request, res: Response) => {
     }
 });
 
-/*create new Post*/
-apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare,upload.single('attached'), async (req: Request, res: Response) => {
-    if (!req.session.isAuthenticated) {
-        console.log('create new task Error');
-        return res.send({error: 'forbidden'});
-    }
-    try {
-        const postItem: Post[] = await Post.bulkCreate([{
-            checked: req.body.done === 'true',
-            text: req.body.text,
-            customer_id: req.session.customer[0].id,
-
-            login: req.session.customer[0].login,
-            userName: req.session.customer[0].userName,
-            face: req.session.customer[0].face,
-        }]);
-      /*  const customerWithNewFilds = {
-            firstName: req.body.name.trim() || registeredCustomer.firstName,
-            img: req.file && req.file.path || registeredCustomer.img
-        }*/
-        console.log("req.file-",req.file);
-
-
-        res.status(201).send(postItem[0]);
-    } catch (e) {
-        console.log(e);
-        res.sendStatus(404)
-    }
-});
-
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
-apiV1Route.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const postIsChanging = await Post.findByPk(+req.body.id);
 
@@ -203,7 +219,7 @@ apiV1Route.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValid
 
 })
 /* deleteTask */
-apiV1Route.delete('/', idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.delete('/', idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const deleteTodoItem = await Post.findAll({
             where: {
@@ -225,9 +241,8 @@ apiV1Route.delete('/', idValid(), checkValidationInMiddleWare, async (req: Reque
         });
        console.log('********', await curCustomer.getCommits());*/
 })
-
 interface IResult {
     [key: string]: boolean
 }
 
-
+export {router as apiV1Route};

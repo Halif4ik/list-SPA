@@ -1,19 +1,9 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.apiV1Route = void 0;
-const express_1 = require("express");
 const validator_1 = require("../midleware/validator");
 const iscorectToken_1 = require("../midleware/iscorectToken");
 const Commits_1 = __importDefault(require("../models/Commits"));
@@ -22,20 +12,69 @@ const post_1 = __importDefault(require("../models/post"));
 const csrf_1 = __importDefault(require("csrf"));
 const sequelize_1 = require("sequelize");
 const { PAGE_PAGINATION } = require('../constants');
-exports.apiV1Route = (0, express_1.Router)({});
-/*create COMENT for Post*/
-exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const multer_1 = __importDefault(require("multer"));
+const express_1 = __importDefault(require("express"));
+const router = express_1.default.Router();
+exports.apiV1Route = router;
+const storage = multer_1.default.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, '../public');
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname);
+    }
+});
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === "image/jpg" || file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+        cb(null, true);
+    }
+    else {
+        cb(new Error("Image uploaded is not of type jpg/jpeg or png"), false);
+    }
+};
+const upload = (0, multer_1.default)({ storage: storage, fileFilter: fileFilter });
+/*create new Post*/
+router.post('/', upload.array('images', 5), async (req, res) => {
+    console.log('!!!!req.body-', req.body);
+    console.log('1111req.file-', req.file);
+    console.log('files-', req.files);
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({ error: 'forbidden' });
     }
     try {
-        const commitItem = yield Commits_1.default.bulkCreate([{
+        const postItem = await post_1.default.bulkCreate([{
+                checked: req.body.done === 'true',
+                text: req.body.text,
+                customer_id: req.session.customer[0].id,
+                login: req.session.customer[0].login,
+                userName: req.session.customer[0].userName,
+                face: req.session.customer[0].face,
+            }]);
+        /*  const customerWithNewFilds = {
+              firstName: req.body.name.trim() || registeredCustomer.firstName,
+              img: req.file && req.file.path || registeredCustomer.img
+          }*/
+        res.status(201).send(postItem[0]);
+    }
+    catch (e) {
+        console.log(e);
+        res.sendStatus(404);
+    }
+});
+/*create COMENT for Post*/
+router.post('/commit', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), validator_1.checkValidationInMiddleWare, async (req, res) => {
+    if (!req.session.isAuthenticated) {
+        console.log('create new task Error');
+        return res.send({ error: 'forbidden' });
+    }
+    try {
+        const commitItem = await Commits_1.default.bulkCreate([{
                 customer_id: req.session.customer[0].id,
                 text: req.body.text,
                 post_id: req.body.post_id
             }]);
-        const rows = yield customer_1.default.findAll({
+        const rows = await customer_1.default.findAll({
             where: {
                 id: req.session.customer[0].id,
             },
@@ -49,16 +88,16 @@ exports.apiV1Route.post('/commit', iscorectToken_1.isCorrectToken, (0, validator
         console.log(e);
         res.sendStatus(404);
     }
-}));
+});
 /*getAll*/
-exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/', async (req, res) => {
     if (!req.session.isAuthenticated)
         return res.send({ error: 'forbidden' });
     const tokens = new csrf_1.default();
     let tokenSentToFront;
     const secret = req.session.secretForCustomer;
     if (secret)
-        tokenSentToFront = yield tokens.create(secret);
+        tokenSentToFront = await tokens.create(secret);
     let reqCurrentPage = req.query.page;
     if (isNaN(parseInt(reqCurrentPage)))
         reqCurrentPage = '1';
@@ -66,14 +105,14 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
     const order = revert === 'true' ? 'ASC' : 'DESC';
     try {
         /*calculating all*/
-        const amountAll = yield post_1.default.count({
+        const amountAll = await post_1.default.count({
             where: {
                 id: {
                     [sequelize_1.Op.gt]: 0
                 }
             }
         });
-        const posts = yield post_1.default.findAll({
+        const posts = await post_1.default.findAll({
             where: {},
             include: [{
                     association: 'Commits',
@@ -88,8 +127,8 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
         for (const onePost of posts) {
             const Commits = onePost['Commits'];
             for (const currentCommit of Commits) {
-                const customerWichMakeCommit = currentCommit === null || currentCommit === void 0 ? void 0 : currentCommit.customer_id;
-                const customerInfo = yield customer_1.default.findAll({
+                const customerWichMakeCommit = currentCommit?.customer_id;
+                const customerInfo = await customer_1.default.findAll({
                     where: {
                         id: customerWichMakeCommit,
                     },
@@ -111,9 +150,9 @@ exports.apiV1Route.get('/', (req, res) => __awaiter(void 0, void 0, void 0, func
         console.log(e);
         res.sendStatus(404);
     }
-}));
+});
 /*getAll for only Current User*/
-exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/my', async (req, res) => {
     if (!req.session.isAuthenticated)
         return res.send({ error: 'forbidden' });
     let reqCurrentPage = req.query.page;
@@ -122,7 +161,7 @@ exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, fu
     const reqRevert = req.query.revert;
     const order = reqRevert === 'true' ? 'ASC' : 'DESC';
     try {
-        const myPosts = yield post_1.default.findAll({
+        const myPosts = await post_1.default.findAll({
             where: {
                 login: req.session.customer[0].login
             },
@@ -139,8 +178,8 @@ exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, fu
         for (const onePost of myPosts) {
             const Commits = onePost['Commits'];
             for (const currentCommit of Commits) {
-                const customerWichMakeCommit = currentCommit === null || currentCommit === void 0 ? void 0 : currentCommit.customer_id;
-                const customerInfo = yield customer_1.default.findAll({
+                const customerWichMakeCommit = currentCommit?.customer_id;
+                const customerInfo = await customer_1.default.findAll({
                     where: {
                         id: customerWichMakeCommit,
                     },
@@ -157,33 +196,11 @@ exports.apiV1Route.get('/my', (req, res) => __awaiter(void 0, void 0, void 0, fu
         console.log(e);
         res.sendStatus(404);
     }
-}));
-/*create new Post*/
-exports.apiV1Route.post('/', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!req.session.isAuthenticated) {
-        console.log('create new task Error');
-        return res.send({ error: 'forbidden' });
-    }
-    try {
-        const postItem = yield post_1.default.bulkCreate([{
-                checked: req.body.done === 'true',
-                text: req.body.text,
-                customer_id: req.session.customer[0].id,
-                login: req.session.customer[0].login,
-                userName: req.session.customer[0].userName,
-                face: req.session.customer[0].face,
-            }]);
-        res.status(201).send(postItem[0]);
-    }
-    catch (e) {
-        console.log(e);
-        res.sendStatus(404);
-    }
-}));
+});
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
-exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.textValidMiddleware)(), (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, async (req, res) => {
     try {
-        const postIsChanging = yield post_1.default.findByPk(+req.body.id);
+        const postIsChanging = await post_1.default.findByPk(+req.body.id);
         if (postIsChanging) {
             postIsChanging.text = req.body.text;
             postIsChanging.checked = !!req.body.checked;
@@ -198,17 +215,16 @@ exports.apiV1Route.put('/', iscorectToken_1.isCorrectToken, (0, validator_1.text
         console.log(e);
         res.sendStatus(409);
     }
-}));
+});
 /* deleteTask */
-exports.apiV1Route.delete('/', (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+router.delete('/', (0, validator_1.idValid)(), validator_1.checkValidationInMiddleWare, async (req, res) => {
     try {
-        const deleteTodoItem = yield post_1.default.findAll({
+        const deleteTodoItem = await post_1.default.findAll({
             where: {
                 id: +req.body.id
             }
         });
-        (_a = deleteTodoItem[0]) === null || _a === void 0 ? void 0 : _a.destroy();
+        deleteTodoItem[0]?.destroy();
         res.status(200).send({ 'ok': true });
     }
     catch (e) {
@@ -223,5 +239,5 @@ exports.apiV1Route.delete('/', (0, validator_1.idValid)(), validator_1.checkVali
             }
         });
        console.log('********', await curCustomer.getCommits());*/
-}));
+});
 //# sourceMappingURL=api_V1_route.js.map

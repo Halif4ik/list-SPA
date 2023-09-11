@@ -289,11 +289,13 @@ hr {
     padding: 0px 5px;
 }
 .wrapper div> label{
-    display: flex;
     justify-content: space-between;
 }
-.wrapper div> label Input  {
+.wrapper div> label input:nth-child(1)  {
     width: 80% !important;
+}
+.wrapper div> label input:nth-child(2)  {
+    width: 15% !important;
 }
 .wrapper div> label SPAN  {
     width: 15%;

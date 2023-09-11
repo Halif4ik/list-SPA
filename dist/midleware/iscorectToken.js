@@ -10,12 +10,10 @@ function isCorrectToken(req, res, next) {
     const XSRF = req.headers['x-xcsrf'];
     const token = _csrfToken ? _csrfToken : XSRF;
     const tokens = new csrf_1.default();
-    /*console.log('token-',token);
-     console.log('req.session.secretForCustomer-',req.session.secretForCustomer);
-     console.log('session-',req.session);*/
-    const isCorect = tokens.verify(req.session.secretForCustomer, token);
-    if (!isCorect) {
-        res.status(405);
+    /* console.log('token.body-',req.body);
+     console.log('req.session.secretForCustomer-',req.session.secretForCustomer);*/
+    if (!req.session.secretForCustomer || !tokens.verify(req.session.secretForCustomer, token)) {
+        res.status(405).send({ errors: [{ msg: 'bad tokens csrf' }] });
     }
     else
         next();

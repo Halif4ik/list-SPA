@@ -47,6 +47,7 @@
                 <input v-model.lazy="userName" class="validate" type="text" placeholder="user name" autocomplete="on"
                        required>
                 <span class="errorMsg user-name" v-if="!this.userNameValid">User name length min 1</span>
+                required>
                 <input v-model="homePage" type="url" placeholder="homePage" autocomplete="on">
             </div>
             <div class="LoginButton">
@@ -61,16 +62,16 @@
                     <input @keyup.enter="addTask" class="new_todo" autofocus autocomplete="off"
                            placeholder="Create new post"
                            type="text" v-model="new_task.text">
-                    <span><button @click="addTask" @keypress.enter="addTask"
+                    <input @change="fileSelected" type="file" name="attached">
+                    <span><button @click="addTask"
                                   class="button new_todo_button">Постить</button></span>
                 </label>
             </div>
             <div v-else>
                 <label style="display: flex;">
-                    <input @keyup.enter="addCommit" class="new_todo" value=""
-                           placeholder="Create comment for checked post"
+                    <input @keyup.enter="addCommit" class="new_todo" placeholder="Create comment for checked post"
                            type="text" v-model="new_comit.text">
-                    <span><button @click="addCommit" @keypress.enter="addCommit"
+                    <span><button @click="addCommit"
                                   class="button new_todo_button orange darken-1">Коментить</button></span>
                 </label>
             </div>
@@ -120,42 +121,42 @@
         },
         template: `
           <div class="task" v-bind:class="{ taskCompleted: data.checked}">
-          <div class="contentText">
-            <div>
-              <button @click="$emit('task_done')" class="task_done taskButton">
-                <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
-                <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
-              </button>
-              <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
-              <span class="task_head"><strong>{{ data.userName }}</strong> {{ formatDate(data.createdAt) }}</span>
-            </div>
-            <div v-if="login == data.login">
-              <div class="button check" v-if="!data.editable">
-                <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
-                <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
-                <button v-if="data.userName" @click="$emit('get_my_tasks')" style="color: #15cd2e;">🔎</button>
+            <div class="contentText">
+              <div>
+                <button @click="$emit('task_done')" class="task_done taskButton">
+                  <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
+                  <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
+                </button>
+                <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
+                <span class="task_head"><strong>{{ data.userName }}</strong> {{ formatDate(data.createdAt) }}</span>
               </div>
-              <div v-else>
-                <button @click="$emit('save')"> 💾</button>
-                <button @click="$emit('disable')"> ✕</button>
+              <div v-if="login == data.login">
+                <div class="button check" v-if="!data.editable">
+                  <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
+                  <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
+                  <button v-if="data.userName" @click="$emit('get_my_tasks')" style="color: #15cd2e;">🔎</button>
+                </div>
+                <div v-else>
+                  <button @click="$emit('save')"> 💾</button>
+                  <button @click="$emit('disable')"> ✕</button>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="task_content" v-if="!data.editable"> {{ data.text }}</div>
-          <div v-else>
-            {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus class="edit-input"/>
-          </div>
+            <div class="task_content" v-if="!data.editable"> {{ data.text }}</div>
+            <div v-else>
+              {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus class="edit-input"/>
+            </div>
 
-          <div v-if="data.Commits.length > 0" class="commits-section">
-            <div v-for="(commit, commitIndex) in data.Commits" :key="commitIndex" class="commit">
-              <div class="contentText">
-                <a class="task_face">{{ String.fromCodePoint(commit.customerInfo.face) }}</a>
-                <span class="task_head"><strong>{{ commit.customerInfo.userName }}</strong>
-                  {{ formatDate(commit.createdAt) }}</span>
+            <div v-if="data.Commits.length > 0" class="commits-section">
+              <div v-for="(commit, commitIndex) in data.Commits" :key="commitIndex" class="commit">
+                <div class="contentText">
+                  <a class="task_face">{{ String.fromCodePoint(commit.customerInfo.face) }}</a>
+                  <span class="task_head"><strong>{{ commit.customerInfo.userName }}</strong>
+                    {{ formatDate(commit.createdAt) }}</span>
+                </div>
+                <div class="task_content"> {{ commit.text }}</div>
               </div>
-              <div class="task_content"> {{ commit.text }}</div>
             </div>
-          </div>
           </div>
         `
     });
@@ -193,6 +194,7 @@
             passValid: true,
             currentPage: 1,
             revert: false,
+            attached: '',
         },
         watch: {
             login(value) {
@@ -253,21 +255,25 @@
                         if (response['ok'] === true) {
                             this.getTasks()
                         } else {
-                            alert("Произошла ошибка. Посмотрите консоль разработчика чтоб увидеть подробности.")
+                            alert(`Произошла ошибка.${response.errors[0].msg}.`)
                         }
                     });
             },
             addTask: function () {
                 if (this.new_task.text.trim() !== '') {
-                    let request = JSON.stringify({text: this.new_task.text, _csrf: this._csrf});
+                    let formData = new FormData();
+                    formData.append("text", this.new_task.text);
+                    formData.append("attached", this.attached);
+                    formData.append("_csrf", this._csrf);
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'createItem'};
+
                     fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
-                        body: request,
+                        body: formData,
                         credentials: 'include',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'multipart/form-data'
                         },
                     }).then(res => res.json())
                         .then((response) => {
@@ -275,18 +281,18 @@
                                 this.getTasks();
                                 this.$set(this.new_task, 'text', '');
                             } else {
-                                alert("Произошла ошибка. При создании поста.")
+                                alert(`Ошибка при создании поста.${response?.errors[0]?.msg}`)
                             }
                         });
                 }
             },
             addCommit: function () {
-
                 if (this.new_comit.text.trim() !== '') {
                     let request = JSON.stringify({
                         text: this.new_comit.text,
+                        attached: this.attached,
                         post_id: this.checkedTask.id,
-                        _csrf: this._csrf
+                        _csrf: this._csrf,
                     });
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
@@ -391,7 +397,7 @@
                             } else if (response.error === 'not found') {
                                 alert('Такая комбинация логина и пароля не найдена');
                             } else {
-                                alert(` Произошла ошибка. ${response.errors[0].msg}.`)
+                                alert(` Произошла ошибка. ${response?.errors[0]?.msg}.`)
                             }
                         })
                 }
@@ -418,7 +424,7 @@
                             if (response.ok) {
                                 this.logIn();
                             } else {
-                                alert(`    Произошла ошибка. ${response.errors[0].msg}    .    `)
+                                alert(` Произошла ошибка.${response?.errors[0]?.msg}.`)
                             }
                         });
                 }
@@ -426,6 +432,10 @@
             setRevert(value) {
                 this.revert = value;
                 this.getTasks(this.currentPage);
+            },
+            // Handle the file input change event
+            fileSelected(event) {
+                this.new_task.attached = event.target.files[0];
             },
         },
     });
