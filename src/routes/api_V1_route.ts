@@ -5,9 +5,7 @@ import Post from "../models/post";
 import Commit from "../models/Commits";
 import Tokens from "csrf";
 import {Op} from "sequelize";
-
-import multer from 'multer';
-import express, {Express, NextFunction, Request, Response, Router} from 'express';
+import express, {Express, Request, Response, Router} from 'express';
 import * as fs from "fs";
 import sharp from "sharp";
 
@@ -15,7 +13,7 @@ import {uploadMidleware} from '../midleware/loadFile'
 
 const {PAGE_PAGINATION} = require('../../constants.js');
 const router: Router = express.Router();
-
+const mimeTypeImg = ["image/jpg", "image/gif", "image/png"]
 /*create new Post */
 router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
     if (!req.session.isAuthenticated) {
@@ -25,7 +23,7 @@ router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkVa
     const attachedFile: Express.Multer.File | undefined = req.file;
     try {
         // Resize the image to PNG format (you can adjust the options)
-        if (attachedFile) {
+        if (attachedFile && mimeTypeImg.includes(attachedFile.mimetype)) {
             const resizedImageBuffer: Buffer = await sharp(attachedFile.path)
                 .resize({width: 320, height: 240})
                 .toFormat(attachedFile.mimetype.slice(-3))
@@ -56,7 +54,7 @@ router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkVa
 });
 
 /*create COMENT for Post*/
-router.post('/commit',uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.post('/commit', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});

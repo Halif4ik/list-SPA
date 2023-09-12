@@ -109,7 +109,9 @@
             <div id="lightboxOverlay" tabindex="-1" class="lightboxOverlay"></div>
             <div id="lightbox" tabindex="-1" class="lightbox" style>
                 <div class="lb-outerContainer">
-                    <div class="lb-container"><img class="lb-image" src="static/close.jpg" alt="">
+                    <div class="lb-container">
+                        <img class="lb-image" src="static/close.jpg" alt="">
+                        <object class="lb-txt" data="" width="320" height="240"></object>
                         <div class="lb-loader" style="display: none;"><a class="lb-cancel" role="button"
                                                                          tabindex="0"></a></div>
                     </div>
@@ -170,8 +172,14 @@
           </div>
           <div class="task_content" v-if="!data.editable">
             <p>{{ data.text }}</p>
-            <a v-if="data.attachedFile" class="img" @click="$emit('show_img')"><img class="task_content" style="width:100px" loading="lazy"
-                                                           :src="'http://localhost:3001/static/' + data.attachedFile"><img>
+            <a v-if="data.attachedFile && !data.attachedFile.includes('.txt')" class="img"
+               @click="$emit('show_img')"><img class="task_content" style="width:100px" loading="lazy"
+                                               :src="'http://localhost:3001/static/' + data.attachedFile"><img>
+            </a>
+            <a v-else-if="data.attachedFile" class="img"
+               @click="$emit('show_img')">
+              <img class="task_content" style="width:30px" loading="lazy"
+                   :src="'http://localhost:3001/static/txt.png'"><img>
             </a>
           </div>
           <div class="corectPost" v-else>
@@ -248,6 +256,7 @@
                 const widthParent = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
                 const heightParent = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
                 const imgLb = lightbox.querySelector('.lb-image');
+                const txtLb = lightbox.querySelector('.lb-txt');
 
                 lightboxOverlay.style.width = widthParent + 'px';
                 lightboxOverlay.style.height = heightParent + "px";
@@ -255,6 +264,7 @@
                 // Show/hide the lightbox
                 if (lightbox.style.visibility === 'hidden' || !lightbox.style.visibility) {
                     imgLb.src = url;
+                    txtLb.data = url;
                     lightboxOverlay.style.visibility = lightbox.style.visibility = 'visible';
                     lightboxOverlay.style.top = `${window.scrollY}px`;
                     lightbox.style.top = `${window.scrollY + parseInt(lightbox.style.top)}px`;
