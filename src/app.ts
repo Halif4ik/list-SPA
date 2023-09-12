@@ -41,7 +41,7 @@ class App {
         }));
         this.app.use(bodyParser.urlencoded({extended: true}));
         this.app.use(express.static(path.join(__dirname, '../public')));
-        /*exprApp.use( upload.single('attached'));*/
+        this.app.use('/static',express.static(path.join(__dirname, '../public/upload')));
     }
 
     private allRoutes(): void {

@@ -11,90 +11,52 @@ import express, {Express, NextFunction, Request, Response, Router} from 'express
 import * as fs from "fs";
 import sharp from "sharp";
 
+import {uploadMidleware} from '../midleware/loadFile'
+
 const {PAGE_PAGINATION} = require('../../constants.js');
-
 const router: Router = express.Router();
-const storage: multer.StorageEngine = multer.diskStorage({
-    destination: function (req, file: Express.Multer.File, cb): void {
-        cb(null, './public/upload')
-    },
-    filename: function (req: Request, file: Express.Multer.File, cb): void {
-        cb(null, Date.now() + '-' + Math.round(Math.random() * 1E7) + file.originalname)
-    }
-});
-const fileFilter = (req: any, file: any, cb: any) => {
-    if (file.mimetype === "image/jpg" || file.mimetype === "image/gif" || file.mimetype === "image/png" || file.mimetype === "text/plain") {
-        cb(null, true);
-    } else {
-        cb(new Error("Image uploaded is not of type jpg/GIF or png"), false);
-    }
-}
-const upload = multer({storage: storage, fileFilter: fileFilter}).single('images');
 
-
-/*create new Post todo add midlwar*/
-router.post('/', function (req, res) {
+/*create new Post */
+router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
     }
-    upload(req, res, async function (err) {
-            if (err instanceof multer.MulterError) {
-                res.status(400).json({error: 'More one file was uploaded'});
-            } else if (req.file && req.file.mimetype === "text/plain" && req.file.size > 1024) {
-                fs.unlink(req.file?.path, (unlinkError) => {
-                    if (unlinkError) console.error('Error deleting file:', unlinkError);
-                    else console.log('File deleted successfully');
-                });
-                res.status(400).json({error: 'Too mach size uploaded .txt file'});
-            } else {
-                const attachedFile: Express.Multer.File | undefined = req.file;
-                try {
-                    // Resize the image to PNG format (you can adjust the options)
-                    if (attachedFile) {
-                        const resizedImageBuffer: Buffer = await sharp(attachedFile.path)
-                            .resize({width: 320, height: 240})
-                            .toFormat(attachedFile.mimetype.slice(-3))
-                            .toBuffer();
-                        // Save the resized image to a new file
-                        fs.writeFile(attachedFile.path, resizedImageBuffer, async (writeErr) => {
-                            if (writeErr) {
-                                console.error('Error writing resized image:', writeErr);
-                                return res.sendStatus(500);
-                            }
-                        })
-                    }
-
-                    console.log({
-                        checked: req.body.done === 'true',
-                        text: req.body.text,
-                        customer_id: 1,
-                        attachedFile: attachedFile ? attachedFile.filename : '',
-                        userName: 'kolya',
-                        face: 128105,
-                    });
-
-                    const postItem: Post[] = await Post.bulkCreate([{
-                        checked: req.body.done === 'true',
-                        text: req.body.text,
-                        customer_id: req.session.customer[0].id,
-                        /*attachedFile: attachedFile ? attachedFile.filename : '',*/
-                        login: req.session.customer[0].login,
-                        userName: req.session.customer[0].userName,
-                        face: req.session.customer[0].face,
-                    }]);
-                    res.status(201).send(postItem[0]);
-                } catch (e) {
-                    console.log(e);
-                    res.sendStatus(404)
+    const attachedFile: Express.Multer.File | undefined = req.file;
+    try {
+        // Resize the image to PNG format (you can adjust the options)
+        if (attachedFile) {
+            const resizedImageBuffer: Buffer = await sharp(attachedFile.path)
+                .resize({width: 320, height: 240})
+                .toFormat(attachedFile.mimetype.slice(-3))
+                .toBuffer();
+            // Save the resized image to a new file
+            fs.writeFile(attachedFile.path, resizedImageBuffer, async (writeErr) => {
+                if (writeErr) {
+                    console.error('Error writing resized image:', writeErr);
+                    return res.sendStatus(500);
                 }
-            }
+            })
         }
-    )
-})
+
+        const postItem: Post[] = await Post.bulkCreate([{
+            checked: req.body.done === 'true',
+            text: req.body.text,
+            customer_id: req.session.customer[0].id,
+            attachedFile: attachedFile ? attachedFile.filename : '',
+            login: req.session.customer[0].login,
+            userName: req.session.customer[0].userName,
+            face: req.session.customer[0].face,
+        }]);
+        res.status(201).send(postItem[0]);
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(404)
+    }
+});
 
 /*create COMENT for Post*/
-router.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.post('/commit',uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
@@ -106,14 +68,15 @@ router.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInM
             post_id: req.body.post_id
         }])
 
-        const rows: Costomer[] = await Customer.findAll({
-            where: {
-                id: req.session.customer[0].id,
-            },
-            include: [{
-                association: 'Posts',
-            }],
-        });
+        /* const rows: Costomer[] = await Customer.findAll({
+             where: {
+                 id: req.session.customer[0].id,
+             },
+             include: [{
+                 association: 'Posts',
+             }],
+         });*/
+
         res.status(201).send(commitItem);
     } catch (e) {
         console.log(e);
@@ -172,6 +135,7 @@ router.get('/', async (req: Request, res: Response) => {
                 currentCommit.dataValues['customerInfo'] = {
                     userName: customerInfo[0].dataValues.userName,
                     face: customerInfo[0].dataValues.face,
+                    attachedFile: customerInfo[0].dataValues?.attachedFile || '',
                 }
             }
         }

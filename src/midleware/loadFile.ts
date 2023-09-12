@@ -1,30 +1,35 @@
-import {Request} from 'express'
-/*const upload = multer({ dest: 'public/' });*/
-import multer, {FileFilterCallback} from 'multer'
+import multer from 'multer';
+import {Express, NextFunction, Request, Response} from 'express';
+import fs from "fs";
 
-type DestinationCallback = (error: Error | null, destination: string) => void;
-type FileNameCallback = (error: Error | null, filename: string) => void;
 
-const storage = multer.diskStorage({
-    destination: (request: Request, file: Express.Multer.File, cb: DestinationCallback): void => {
-        cb(null, 'public');
+const storage: multer.StorageEngine = multer.diskStorage({
+    destination: function (req, file: Express.Multer.File, cb): void {
+        cb(null, './public/upload')
     },
-
-    filename: (req: Request, file: Express.Multer.File, cb: FileNameCallback): void => {
-        const uniqueSuffix: string = Date.now() + '-' + Math.round(Math.random() * 1E7) + file.originalname;
-        cb(null, file.fieldname + '-' + uniqueSuffix);
+    filename: function (req: Request, file: Express.Multer.File, cb): void {
+        cb(null, Date.now() + '-' + Math.round(Math.random() * 1E7) + file.originalname)
     }
-})
-/*const allowTypes: string[] = ['image/png', 'image/jpg', 'image/gif', 'text/plain']; allowTypes.includes(file.mimetype)*/
-
-const fileFilter = (
-    request: Request, file: Express.Multer.File, callback: FileFilterCallback): void => {
-    if (file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg') {
-        callback(null, true)
+});
+const fileFilter = (req: any, file: any, cb: any) => {
+    if (file.mimetype === "image/jpg" || file.mimetype === "image/gif" || file.mimetype === "image/png" || file.mimetype === "text/plain") {
+        cb(null, true);
     } else {
-        console.log('mimetype-', file.mimetype);
-        callback(null, false)
+        cb(new Error("Image uploaded is not of type jpg/GIF or png"), false);
     }
 }
+const upload = multer({storage: storage, fileFilter: fileFilter}).single('images');
 
-export const upload = multer({storage: storage, fileFilter: fileFilter});
+export const uploadMidleware = (req: Request, res: Response, next: NextFunction) => {
+    upload(req, res, async function (err) {
+            if (err instanceof multer.MulterError) res.status(400).json({error: 'More one file was uploaded'});
+            else if (req.file && req.file.mimetype === "text/plain" && req.file.size > 1024) {
+                fs.unlink(req.file?.path, (unlinkError) => {
+                    if (unlinkError) console.error('Error deleting file:', unlinkError);
+                    else console.log('File deleted successfully');
+                });
+                res.status(400).json({error: 'Too mach size uploaded .txt file'});
+            } else next()
+        }
+    )
+};

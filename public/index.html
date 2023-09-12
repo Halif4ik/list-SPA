@@ -22,18 +22,16 @@
                 Api URL:
                 <input type="text" v-model="apiURL">
             </label>
-            <div>
-                На каком языке бекенд?
+            <div style="display: none">
                 <button @click="backendLanguage='JS'" v-bind:class="{'selected': backendLanguage === 'JS'}">JS
                 </button>
             </div>
-            <div>
-                Версия АПИ
+            <div style="display: none">
                 <button @click="apiVersion='v1'" :class="{'selected': apiVersion === 'v1'}">v1</button>
             </div>
 
             <div>
-                <button @click="getTasks()" class="primary">Поехали</button>
+                <button @click="getTasks()" class="primary btn">Поехали</button>
             </div>
         </div>
         <div class="wrapper login" v-if="step === 'login'">
@@ -58,13 +56,21 @@
             <h4>Добавить новую запись:</h4>
             <div v-if="posting">
                 <label style="display: flex;">
-                    <input @keyup.enter="addTask" class="new_todo" autofocus autocomplete="off"
+                    <input @keyup.enter="addPost" class="new_todo" autofocus autocomplete="off"
                            placeholder="Create new post"
                            type="text" v-model="new_task.text">
-                    <input @change="fileSelected" type="file" name="attached">
-                    <span><button @click="addTask"
-                                  class="button new_todo_button">Постить</button></span>
                 </label>
+                <div class="file-field input-field">
+                    <div class="btn">
+                        <span>Текст/Img</span>
+                        <input @change="fileSelected" type="file" name="attached">
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path" type="text">
+                    </div>
+                    <span><input type="submit" @click="addPost"
+                                 class="button new_todo_button" value="Постить"><input></span>
+                </div>
             </div>
             <div v-else>
                 <label style="display: flex;">
@@ -81,12 +87,14 @@
                   @task_done="markForCommit(index,task)"
                   @save="save(index, task.id)"
                   @disable="disable(index)"
+                  @show_img="showImg('http://localhost:3001/static/' + task.attachedFile)"
                   @get_my_tasks="getTasks(1,'/my')"
                   :data="task"
                   v-bind:index="index+1"
                   v-for="(task, index) in tasks"
                   :login="currentLogin"
                   :key="index"></task>
+
             <div class="wrapper pagination" v-if="pages > 1">
                 <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx }}</button>
             </div>
@@ -97,6 +105,25 @@
             <button v-if="!this.revert" @click="setRevert(true)" class="logout btn btm-small js-remove">Revert</button>
             <button v-else="this.revert" @click="setRevert(false)" class="logout btn btm-small js-remove">LIFO
             </button>
+            <!--modal window for IMG-->
+            <div id="lightboxOverlay" tabindex="-1" class="lightboxOverlay"></div>
+            <div id="lightbox" tabindex="-1" class="lightbox" style>
+                <div class="lb-outerContainer">
+                    <div class="lb-container"><img class="lb-image" src="static/close.jpg" alt="">
+                        <div class="lb-loader" style="display: none;"><a class="lb-cancel" role="button"
+                                                                         tabindex="0"></a></div>
+                    </div>
+                </div>
+                <div class="lb-dataContainer">
+                    <div class="lb-data">
+                        <div class="lb-details"><span class="lb-caption" style="">Optional caption.</span><span
+                                class="lb-number" style="display: none;"></span></div>
+                        <div @click="showImg" class="lb-closeContainer"><a class="lb-close" role="button"
+                                                                           tabindex="0"></a></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <div class="wrapper" v-else-if="step === 'error'">
             Произошла ошибка. Откройте консоль разработчика чтоб увидеть подробности.
@@ -120,43 +147,51 @@
         },
         template: `
           <div class="task" v-bind:class="{ taskCompleted: data.checked}">
-            <div class="contentText">
-              <div>
-                <button @click="$emit('task_done')" class="task_done taskButton">
-                  <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
-                  <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
-                </button>
-                <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
-                <span class="task_head"><strong>{{ data.userName }}</strong> {{ formatDate(data.createdAt) }}</span>
-              </div>
-              <div v-if="login == data.login">
-                <div class="button check" v-if="!data.editable">
-                  <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
-                  <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
-                  <button v-if="data.userName" @click="$emit('get_my_tasks')" style="color: #15cd2e;">🔎</button>
-                </div>
-                <div v-else>
-                  <button @click="$emit('save')"> 💾</button>
-                  <button @click="$emit('disable')"> ✕</button>
-                </div>
-              </div>
+          <div class="headerContent">
+            <div>
+              <button @click="$emit('task_done')" class="task_done taskButton">
+                <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
+                <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
+              </button>
+              <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
+              <span class="task_head"><strong>{{ data.userName }}</strong> {{ formatDate(data.createdAt) }}</span>
             </div>
-            <div class="task_content" v-if="!data.editable"> {{ data.text }}</div>
-            <div v-else>
-              {{ index }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus class="edit-input"/>
-            </div>
-
-            <div v-if="data.Commits.length > 0" class="commits-section">
-              <div v-for="(commit, commitIndex) in data.Commits" :key="commitIndex" class="commit">
-                <div class="contentText">
-                  <a class="task_face">{{ String.fromCodePoint(commit.customerInfo.face) }}</a>
-                  <span class="task_head"><strong>{{ commit.customerInfo.userName }}</strong>
-                    {{ formatDate(commit.createdAt) }}</span>
-                </div>
-                <div class="task_content"> {{ commit.text }}</div>
+            <div v-if="login === data.login">
+              <div class="button check" v-if="!data.editable">
+                <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
+                <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
+                <button v-if="data.userName" @click="$emit('get_my_tasks')" style="color: #15cd2e;">🔎</button>
+              </div>
+              <div v-else>
+                <button @click="$emit('save')"> 💾</button>
+                <button @click="$emit('disable')"> ✕</button>
               </div>
             </div>
           </div>
+          <div class="task_content" v-if="!data.editable">
+            <p>{{ data.text }}</p>
+            <a v-if="data.attachedFile" class="img" @click="$emit('show_img')"><img class="task_content" style="width:100px" loading="lazy"
+                                                           :src="'http://localhost:3001/static/' + data.attachedFile"><img>
+            </a>
+          </div>
+          <div class="corectPost" v-else>
+            {{ formatDate(data.updatedAt) }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
+                                                    class="edit-input"/>
+          </div>
+
+          <div v-if="data.Commits.length > 0" class="commits-section">
+            <div v-for="(commit, commitIndex) in data.Commits" :key="commitIndex" class="commit">
+              <div class="headerContent">
+                <a class="task_face">{{ String.fromCodePoint(commit.customerInfo.face) }}</a>
+                <span class="task_head"><strong>{{ commit.customerInfo.userName }}</strong>
+                  {{ formatDate(commit.createdAt) }}</span>
+              </div>
+              <div class="task_content"> {{ commit.text }}</div>
+            </div>
+          </div>
+          </div>
+
+
         `
     });
 
@@ -186,7 +221,7 @@
             apiVersion: 'v1',
             step: '',
             posting: true,
-            checkedTask: '',
+            checkedPost: '',
             ePlaceHolder: 'yaropolk@example.com',
             emailValid: true,
             userNameValid: true,
@@ -207,6 +242,34 @@
             },
         },
         methods: {
+            showImg: function (url) {
+                const lightbox = document.getElementById('lightbox');
+                const lightboxOverlay = document.getElementById('lightboxOverlay');
+                const widthParent = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+                const heightParent = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+                const imgLb = lightbox.querySelector('.lb-image');
+
+                lightboxOverlay.style.width = widthParent + 'px';
+                lightboxOverlay.style.height = heightParent + "px";
+
+                // Show/hide the lightbox
+                if (lightbox.style.visibility === 'hidden' || !lightbox.style.visibility) {
+                    imgLb.src = url;
+                    lightboxOverlay.style.visibility = lightbox.style.visibility = 'visible';
+                    lightboxOverlay.style.top = `${window.scrollY}px`;
+                    lightbox.style.top = `${window.scrollY + parseInt(lightbox.style.top)}px`;
+
+                } else {
+                    lightboxOverlay.style.opacity = lightbox.style.opacity = "0";
+                    setTimeout(() => {
+                        lightboxOverlay.style.visibility = lightbox.style.visibility = 'hidden';
+                        setTimeout(() => {
+                            lightboxOverlay.style.opacity = "0.7";
+                            lightbox.style.opacity = "unset";
+                        }, 500)
+                    }, 800)
+                }
+            },
             getTasks: function (numberPage = 1, my = '') {
                 this.currentPage = numberPage;
                 const revert = this.revert;
@@ -258,14 +321,15 @@
                         }
                     });
             },
-            addTask: function () {
+            addPost: function () {
                 if (this.new_task.text.trim() !== '') {
-                    let formData = new FormData();
+                    const formData = new FormData();
                     formData.append("text", this.new_task.text);
                     formData.append("images", this.attached);
                     formData.append("_csrf", this._csrf);
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'createItem'};
+                    this.attached = '';
 
                     fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
@@ -284,21 +348,19 @@
             },
             addCommit: function () {
                 if (this.new_comit.text.trim() !== '') {
-                    let request = JSON.stringify({
-                        text: this.new_comit.text,
-                        attached: this.attached,
-                        post_id: this.checkedTask.id,
-                        _csrf: this._csrf,
-                    });
+                    const formData = new FormData();
+                    formData.append("text", this.new_comit.text);
+                    formData.append("images", this.attached);
+                    formData.append("_csrf", this._csrf);
+                    formData.append("post_id", this.checkedPost.id);
+                    this.checkedPost = '';
+
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
                     fetch(this.apiURL + this.apiVersion + route + '/commit' + '?' + new URLSearchParams(qs), {
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
-                        body: request,
+                        body: formData,
                         credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
                     })
                         .then(res => res.json())
                         .then(() => {
@@ -331,14 +393,14 @@
                     });
             },
             markForCommit(index, task) {
-                if (!this.checkedTask) {
+                if (!this.checkedPost) {
                     this.$set(this.tasks[index], 'checked', !this.tasks[index].checked);
                     this.posting = !this.posting;
-                    this.checkedTask = task;
-                } else if (this.checkedTask.id === task.id) {
+                    this.checkedPost = task;
+                } else if (this.checkedPost.id === task.id) {
                     this.$set(this.tasks[index], 'checked', !this.tasks[index].checked);
                     this.posting = !this.posting;
-                    this.checkedTask = '';
+                    this.checkedPost = '';
                 }
             },
             editTask(index) {

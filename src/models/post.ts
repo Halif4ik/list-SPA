@@ -14,9 +14,9 @@ const model = Post.init({
     checked: {allowNull: false, type: DataTypes.BOOLEAN},
     text: {allowNull: false, type: DataTypes.STRING},
     editable: {allowNull: true, type: DataTypes.BOOLEAN},
+    attachedFile: {allowNull: true, type: DataTypes.STRING},
+    /*  creator: {*/
     customer_id: {type: DataTypes.TINYINT.UNSIGNED},
-  /*  creator: {
-    attachedFile: {allowNull: true, type: DataTypes.STRING},*/
     login: {allowNull: true, type: DataTypes.STRING},
     userName: {allowNull: false, type: DataTypes.STRING},
     face: {allowNull: true, type: DataTypes.INTEGER.UNSIGNED},

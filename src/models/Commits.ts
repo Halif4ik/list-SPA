@@ -14,6 +14,7 @@ const model = Commit.init({
     customer_id: {type: DataTypes.TINYINT.UNSIGNED},
     post_id: {type: DataTypes.SMALLINT.UNSIGNED},
     text: {allowNull: false, type: DataTypes.STRING},
+    attachedFile: {allowNull: true, type: DataTypes.STRING},
 }, {sequelize, tableName: 'ComentsList'});
 
 /*model.belongsTo(Post, { foreignKey: 'post_id' });*/
