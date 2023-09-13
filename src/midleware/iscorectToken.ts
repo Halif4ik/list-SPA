@@ -6,8 +6,10 @@ export function isCorrectToken(req: Request, res: Response, next: NextFunction) 
     const token = _csrfToken ? _csrfToken : XSRF;
 
     const tokens:Tokens = new Tokens();
-    /*console.log('token.body-',req.body);
-    console.log('req.session.secretForCustomer-',req.session.secretForCustomer);*/
+    console.log('body-',req.body);
+    console.log('headers-',req.headers);
+    console.log('token-',token);
+    console.log('req.session.secretForCustomer-',req.session.secretForCustomer);
 
     if (!req.session.secretForCustomer || !tokens.verify(req.session.secretForCustomer, token)) {
         res.status(405).send({errors: [{msg:'bad tokens csrf'}]});

@@ -14,13 +14,16 @@ import {uploadMidleware} from '../midleware/loadFile'
 const {PAGE_PAGINATION} = require('../../constants.js');
 const router: Router = express.Router();
 const mimeTypeImg = ["image/jpg", "image/gif", "image/png"]
-/*create new Post */
-router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
-    if (!req.session.isAuthenticated) {
+
+/*create new Post  todo isCorrectToken,*/
+
+router.post('/', uploadMidleware,  textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
+   /* if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
-    }
+    }*/
     const attachedFile: Express.Multer.File | undefined = req.file;
+    console.log("attachedFile-",attachedFile);
     try {
         // Resize the image to PNG format (you can adjust the options)
         if (attachedFile && mimeTypeImg.includes(attachedFile.mimetype)) {
@@ -218,7 +221,7 @@ router.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValidatio
 
 })
 /* deleteTask */
-router.delete('/', idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.delete('/',isCorrectToken, idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const deleteTodoItem = await Post.findAll({
             where: {

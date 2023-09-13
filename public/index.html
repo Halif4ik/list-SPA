@@ -315,12 +315,14 @@
                 let request = JSON.stringify({id: index,});
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? '' : 'deleteItem'};
+
                 fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                     method: this.apiVersion === 'v1' ? 'DELETE' : 'POST',
                     body: request,
                     credentials: 'include',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'x-xcsrf': this._csrf
                     },
                 }).then(res => res.json())
                     .then((response) => {
@@ -345,6 +347,9 @@
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
                         body: formData,
                         credentials: 'include',
+                        headers: {
+                            'x-xcsrf': this._csrf
+                        },
                     }).then(res => res.json())
                         .then((response) => {
                             if (response.id) {
