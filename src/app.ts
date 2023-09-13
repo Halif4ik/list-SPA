@@ -6,7 +6,6 @@ import path from "path";
 import session from "express-session";
 import {sequelize} from "./utils/database";
 import {Model} from "sequelize";
-import multer from "multer";
 
 declare module 'express-session' {
     export interface SessionData {

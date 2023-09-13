@@ -9,21 +9,34 @@ import express, {Express, Request, Response, Router} from 'express';
 import * as fs from "fs";
 import sharp from "sharp";
 
-import {uploadMidleware} from '../midleware/loadFile'
+import {upload} from '../midleware/loadFile'
 
-const {PAGE_PAGINATION} = require('../../constants.js');
+const {PAGE_PAGINATION} = require('../constants.js');
 const router: Router = express.Router();
 const mimeTypeImg = ["image/jpg", "image/gif", "image/png"]
 
-/*create new Post  todo isCorrectToken,*/
+/*  todo Dosent work in windows,
+const uploadMidleware = (req: Request, res: Response, next: NextFunction) => {
+    upload.single('images')(req, res, async function (err) {
+            if (err instanceof multer.MulterError) res.status(400).json({error: 'More one file was uploaded'});
+            else if (req.file && req.file.mimetype === "text/plain" && req.file.size > 1024) {
+                fs.unlink(req.file?.path, (unlinkError) => {
+                    if (unlinkError) console.error('Error deleting file:', unlinkError);
+                    else console.log('File deleted successfully');
+                });
+                res.status(400).json({error: 'Too mach size uploaded .txt file'});
+            } else next()
+        }
+    )
+};*/
 
-router.post('/', uploadMidleware,  textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
-   /* if (!req.session.isAuthenticated) {
+/*create new Post  todo isCorrectToken,*/
+router.post('/', upload.single('images'), isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
+    if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
-    }*/
+    }
     const attachedFile: Express.Multer.File | undefined = req.file;
-    console.log("attachedFile-",attachedFile);
     try {
         // Resize the image to PNG format (you can adjust the options)
         if (attachedFile && mimeTypeImg.includes(attachedFile.mimetype)) {
@@ -56,8 +69,8 @@ router.post('/', uploadMidleware,  textValidMiddleware(), checkValidationInMiddl
     }
 });
 
-/*create COMENT for Post*/
-router.post('/commit', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+/*create COMENT for Post todo move to POST*/
+router.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
@@ -221,7 +234,7 @@ router.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValidatio
 
 })
 /* deleteTask */
-router.delete('/',isCorrectToken, idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.delete('/', isCorrectToken, idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const deleteTodoItem = await Post.findAll({
             where: {

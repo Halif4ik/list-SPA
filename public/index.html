@@ -87,12 +87,13 @@
                   @task_done="markForCommit(index,task)"
                   @save="save(index, task.id)"
                   @disable="disable(index)"
-                  @show_img="showImg('http://localhost:3001/static/' + task.attachedFile)"
+                  @show_img="showImg(host +'static/' + task.attachedFile)"
                   @get_my_tasks="getTasks(1,'/my')"
                   :data="task"
                   v-bind:index="index+1"
                   v-for="(task, index) in tasks"
                   :login="currentLogin"
+                  :url="host"
                   :key="index"></task>
 
             <div class="wrapper pagination" v-if="pages > 1">
@@ -107,7 +108,7 @@
             </button>
             <!--modal window for IMG-->
             <div id="lightboxOverlay" tabindex="-1" class="lightboxOverlay"></div>
-            <div id="lightbox" tabindex="-1" class="lightbox" style>
+            <div id="lightbox" tabindex="-1" class="lightbox" style="display: none">
                 <div class="lb-outerContainer">
                     <div class="lb-container">
                         <img class="lb-image" src="static/close.jpg" alt="">
@@ -134,7 +135,7 @@
 </div>
 <script>
     Vue.component("task", {
-        props: ["data", "index", "login"],
+        props: ["data", "index", "login", "url"],
         methods: {
             formatDate(value) {
                 const options = {
@@ -174,12 +175,12 @@
             <p>{{ data.text }}</p>
             <a v-if="data.attachedFile && !data.attachedFile.includes('.txt')" class="img"
                @click="$emit('show_img')"><img class="task_content" style="width:100px" loading="lazy"
-                                               :src="'http://localhost:3001/static/' + data.attachedFile"><img>
+                                               :src="url+'static/' + data.attachedFile"><img>
             </a>
             <a v-else-if="data.attachedFile" class="img"
                @click="$emit('show_img')">
               <img class="task_content" style="width:30px" loading="lazy"
-                   :src="'http://localhost:3001/static/txt.png'"><img>
+                   :src="url+'static/txt.png'"><img>
             </a>
           </div>
           <div class="corectPost" v-else>
@@ -198,12 +199,11 @@
             </div>
           </div>
           </div>
-
-
         `
     });
 
-    let vue = new Vue({
+    const HOST = 'http://localhost:3001/';
+    const vue = new Vue({
         el: '#app',
         data: {
             new_task: {
@@ -225,7 +225,8 @@
             _csrf: '',
             pass: '',
             backendLanguage: 'JS',
-            apiURL: 'http://localhost:3001/api/',
+            host : HOST,
+            apiURL: HOST + 'api/',
             apiVersion: 'v1',
             step: '',
             posting: true,
@@ -258,9 +259,9 @@
                 const imgLb = lightbox.querySelector('.lb-image');
                 const txtLb = lightbox.querySelector('.lb-txt');
 
+                lightbox.style.setProperty('display','block','important');
                 lightboxOverlay.style.width = widthParent + 'px';
                 lightboxOverlay.style.height = heightParent + "px";
-
                 // Show/hide the lightbox
                 if (lightbox.style.visibility === 'hidden' || !lightbox.style.visibility) {
                     imgLb.src = url;
@@ -391,7 +392,6 @@
                     checked: this.tasks[index].checked,
                     _csrf: this._csrf
                 });
-                /*{"text":"Djon!!!","id":1,"checked":true}*/
                 const route = this.apiVersion === 'v1' ? '/items' : '/router';
                 const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
                 fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {

@@ -5,4 +5,4 @@ dist
 /dist
 /public/upload
 /src/const.dev.ts
-const.dev.js
+src/const.dev.ts

@@ -397,10 +397,10 @@ hr {
     position: absolute;
     top: 300px;
     left: 0;
-     visibility: hidden;
+    visibility: hidden;
     transition-property: all;
-    transition-duration: 0.5s;
-    transition-delay: 0s;
+    transition-duration: 0.6s;
+    transition-delay: 0.1s;
     transition-timing-function: ease-in-out;
 }
 .lb-outerContainer {
@@ -410,5 +410,6 @@ hr {
     background-color: #fff;
     width: 320px;
     height: 240px;
+    visibility: inherit;
 }
 
