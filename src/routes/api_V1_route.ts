@@ -1,19 +1,77 @@
-import {Request, Response, Router} from "express";
 import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
 import {isCorrectToken} from "../midleware/iscorectToken";
-import Commit from "../models/Commits";
 import Customer from "../models/customer";
 import Post from "../models/post";
+import Commit from "../models/Commits";
 import Tokens from "csrf";
 import {Op} from "sequelize";
-import {upload} from "../midleware/loadFile";
+import express, {Express, Request, Response, Router,NextFunction} from 'express';
+import * as fs from "fs";
+import sharp from "sharp";
 
-const {PAGE_PAGINATION} = require('../constants');
+import {upload} from '../midleware/loadFile'
+import multer from "multer";
 
-export const apiV1Route = Router({});
+const {PAGE_PAGINATION} = require('../constants.js');
+const router: Router = express.Router();
+const mimeTypeImg = ["image/jpg", "image/gif", "image/png"]
 
-/*create COMENT for Post*/
-apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+/* todo this midleware cheking dosent work in windows,*/
+const uploadMidleware = (req: Request, res: Response, next: NextFunction) => {
+    upload.single('images')(req, res, async function (err) {
+            if (err instanceof multer.MulterError) res.status(400).json({error: 'More one file was uploaded'});
+            else if (req.file && req.file.mimetype === "text/plain" && req.file.size > 1024) {
+                fs.unlink(req.file?.path, (unlinkError) => {
+                    if (unlinkError) console.error('Error deleting file:', unlinkError);
+                    else console.log('File deleted successfully');
+                });
+                res.status(400).json({error: 'Too mach size uploaded .txt file'});
+            } else next()
+        }
+    )
+};
+
+/*create new Post  todo isCorrectToken,*/
+router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
+    if (!req.session.isAuthenticated) {
+        console.log('create new task Error');
+        return res.send({error: 'forbidden'});
+    }
+    const attachedFile: Express.Multer.File | undefined = req.file;
+    try {
+        // Resize the image to PNG format (you can adjust the options)
+        if (attachedFile && mimeTypeImg.includes(attachedFile.mimetype)) {
+            const resizedImageBuffer: Buffer = await sharp(attachedFile.path)
+                .resize({width: 320, height: 240})
+                .toFormat(attachedFile.mimetype.slice(-3))
+                .toBuffer();
+            // Save the resized image to a new file
+            fs.writeFile(attachedFile.path, resizedImageBuffer, async (writeErr) => {
+                if (writeErr) {
+                    console.error('Error writing resized image:', writeErr);
+                    return res.sendStatus(500);
+                }
+            })
+        }
+
+        const postItem: Post[] = await Post.bulkCreate([{
+            checked: req.body.done === 'true',
+            text: req.body.text,
+            customer_id: req.session.customer[0].id,
+            attachedFile: attachedFile ? attachedFile.filename : '',
+            login: req.session.customer[0].login,
+            userName: req.session.customer[0].userName,
+            face: req.session.customer[0].face,
+        }]);
+        res.status(201).send(postItem[0]);
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(404)
+    }
+});
+
+/*create COMENT for Post todo move to POST*/
+router.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
@@ -25,23 +83,14 @@ apiV1Route.post('/commit', isCorrectToken, textValidMiddleware(), checkValidatio
             post_id: req.body.post_id
         }])
 
-        const rows = await Customer.findAll({
-            where: {
-                id: req.session.customer[0].id,
-            },
-            include: [{
-                association: 'Posts',
-            }],
-        });
         res.status(201).send(commitItem);
     } catch (e) {
         console.log(e);
         res.sendStatus(404)
     }
 });
-
 /*getAll*/
-apiV1Route.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
     const tokens: Tokens = new Tokens();
     let tokenSentToFront;
@@ -63,7 +112,7 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
             }
         });
 
-        const posts = await Post.findAll({
+        const posts: Post[] = await Post.findAll({
             where: {},
             include: [{
                 association: 'Commits',
@@ -72,15 +121,19 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
                 ['id', order],
             ],
             limit: PAGE_PAGINATION,
-            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage)-1),
+            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage) - 1),
         });
 
+        /*console.log('*******0', posts[1]);
+        console.log('--------', await posts[1].getCommits());
+        console.log('********', await posts[1].getCustomer());*/
+
         /*kostil add user info in answer*/
-        for (const onePost of posts) {
-            const Commits = onePost['Commits'];
-            for (const currentCommit of Commits) {
+        for (const onePost: Post of posts) {
+            const Commits: Post = onePost['Commits'];
+            for (const currentCommit: Post of Commits) {
                 const customerWichMakeCommit = currentCommit?.customer_id;
-                const customerInfo = await Customer.findAll({
+                const customerInfo: Customer[] = await Customer.findAll({
                     where: {
                         id: customerWichMakeCommit,
                     },
@@ -88,10 +141,10 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
                 currentCommit.dataValues['customerInfo'] = {
                     userName: customerInfo[0].dataValues.userName,
                     face: customerInfo[0].dataValues.face,
+                    attachedFile: customerInfo[0].dataValues?.attachedFile || '',
                 }
             }
         }
-
         res.send({
             items: posts,
             loginOfCurrentUser: req.session.customer[0].login,
@@ -104,7 +157,7 @@ apiV1Route.get('/', async (req: Request, res: Response) => {
     }
 });
 /*getAll for only Current User*/
-apiV1Route.get('/my', async (req: Request, res: Response) => {
+router.get('/my', async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
     let reqCurrentPage: string | any = req.query.page;
     if (isNaN(parseInt(reqCurrentPage))) reqCurrentPage = '1'
@@ -124,7 +177,7 @@ apiV1Route.get('/my', async (req: Request, res: Response) => {
                 ['createdAt', order],
             ],
             limit: PAGE_PAGINATION,
-            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage)-1),
+            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage) - 1),
         });
 
         /*kostil add user info to response array*/
@@ -152,38 +205,8 @@ apiV1Route.get('/my', async (req: Request, res: Response) => {
     }
 });
 
-/*create new Post*/
-apiV1Route.post('/', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare,upload.single('attached'), async (req: Request, res: Response) => {
-    if (!req.session.isAuthenticated) {
-        console.log('create new task Error');
-        return res.send({error: 'forbidden'});
-    }
-    try {
-        const postItem: Post[] = await Post.bulkCreate([{
-            checked: req.body.done === 'true',
-            text: req.body.text,
-            customer_id: req.session.customer[0].id,
-
-            login: req.session.customer[0].login,
-            userName: req.session.customer[0].userName,
-            face: req.session.customer[0].face,
-        }]);
-      /*  const customerWithNewFilds = {
-            firstName: req.body.name.trim() || registeredCustomer.firstName,
-            img: req.file && req.file.path || registeredCustomer.img
-        }*/
-        console.log("req.file-",req.file);
-
-
-        res.status(201).send(postItem[0]);
-    } catch (e) {
-        console.log(e);
-        res.sendStatus(404)
-    }
-});
-
 /*markAsDone and update task 'v1' ? 'PUT'   {"text":"Djon!!!","id":1,"checked":true} */
-apiV1Route.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const postIsChanging = await Post.findByPk(+req.body.id);
 
@@ -203,7 +226,7 @@ apiV1Route.put('/', isCorrectToken, textValidMiddleware(), idValid(), checkValid
 
 })
 /* deleteTask */
-apiV1Route.delete('/', idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.delete('/', isCorrectToken, idValid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     try {
         const deleteTodoItem = await Post.findAll({
             where: {
@@ -216,18 +239,18 @@ apiV1Route.delete('/', idValid(), checkValidationInMiddleWare, async (req: Reque
         console.log(e);
         res.sendStatus(400).send({'bad': false} as IResult)
     }
-    /*let curCustomer: Customer | null = await Customer.findOne({
+    /* const rows: Costomer[] = await Customer.findAll({
             where: {
-                id: {
-                    [Op.eq]: req.session.customer[0].id
-                }
-            }
-        });
-       console.log('********', await curCustomer.getCommits());*/
+                id: req.session.customer[0].id,
+            },
+            include: [{
+                association: 'Posts',
+            }],
+        });*/
 })
 
 interface IResult {
     [key: string]: boolean
 }
 
-
+export {router as apiV1Route};

@@ -14,13 +14,10 @@ const model = Post.init({
     checked: {allowNull: false, type: DataTypes.BOOLEAN},
     text: {allowNull: false, type: DataTypes.STRING},
     editable: {allowNull: true, type: DataTypes.BOOLEAN},
+    attachedFile: {allowNull: true, type: DataTypes.STRING},
+    /*  creator: {*/
     customer_id: {type: DataTypes.TINYINT.UNSIGNED},
-  /*  creator: {
-        login: {allowNull: false, type: DataTypes.STRING},
-        userName: {allowNull: false, type: DataTypes.STRING},
-        face: {allowNull: true, type: DataTypes.INTEGER.UNSIGNED},
-    },*/
-    login: {allowNull: false, type: DataTypes.STRING},
+    login: {allowNull: true, type: DataTypes.STRING},
     userName: {allowNull: false, type: DataTypes.STRING},
     face: {allowNull: true, type: DataTypes.INTEGER.UNSIGNED},
 
@@ -28,6 +25,7 @@ const model = Post.init({
 
 model.hasMany(Commit, {as: 'Commits', foreignKey: 'post_id'});
 /*model.belongsTo(Customer, {targetKey: 'id'});*/
+/*model.belongsTo(Customer, { as: 'Customer',targetKey: 'id',foreignKey: 'customer_id' });*/
 export default model;
 
 
