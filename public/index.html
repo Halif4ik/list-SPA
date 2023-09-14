@@ -111,8 +111,9 @@
             <div id="lightbox" tabindex="-1" class="lightbox" style="display: none">
                 <div class="lb-outerContainer">
                     <div class="lb-container">
-                        <img class="lb-image" src="static/close.jpg" alt="">
-                        <object class="lb-txt" data="" width="320" height="240"></object>
+                        <img v-if="!linkInModalWindow.includes('.txt')" class="lb-image" src="static/close.jpg" alt="">
+                        <object v-if="linkInModalWindow.includes('.txt') || !linkInModalWindow" class="lb-txt" data=""
+                                width="320" height="240"></object>
                         <div class="lb-loader" style="display: none;"><a class="lb-cancel" role="button"
                                                                          tabindex="0"></a></div>
                     </div>
@@ -225,7 +226,7 @@
             _csrf: '',
             pass: '',
             backendLanguage: 'JS',
-            host : HOST,
+            host: HOST,
             apiURL: HOST + 'api/',
             apiVersion: 'v1',
             step: '',
@@ -238,6 +239,7 @@
             currentPage: 1,
             revert: false,
             attached: '',
+            linkInModalWindow: '',
         },
         watch: {
             login(value) {
@@ -259,19 +261,20 @@
                 const imgLb = lightbox.querySelector('.lb-image');
                 const txtLb = lightbox.querySelector('.lb-txt');
 
-                lightbox.style.setProperty('display','block','important');
+                lightbox.style.setProperty('display', 'block', 'important');
                 lightboxOverlay.style.width = widthParent + 'px';
                 lightboxOverlay.style.height = heightParent + "px";
                 // Show/hide the lightbox
                 if (lightbox.style.visibility === 'hidden' || !lightbox.style.visibility) {
-                    imgLb.src = url;
-                    txtLb.data = url;
+                    if (url.includes('.txt')) this.linkInModalWindow = txtLb.data = url;
+                    else this.linkInModalWindow = imgLb.src = url;
+
                     lightboxOverlay.style.visibility = lightbox.style.visibility = 'visible';
                     lightboxOverlay.style.top = `${window.scrollY}px`;
                     lightbox.style.top = `${window.scrollY + parseInt(lightbox.style.top)}px`;
-
                 } else {
                     lightboxOverlay.style.opacity = lightbox.style.opacity = "0";
+                    this.linkInModalWindow = "";
                     setTimeout(() => {
                         lightboxOverlay.style.visibility = lightbox.style.visibility = 'hidden';
                         setTimeout(() => {
@@ -343,7 +346,6 @@
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'createItem'};
                     this.attached = '';
-
                     fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
                         body: formData,
@@ -367,16 +369,17 @@
                     const formData = new FormData();
                     formData.append("text", this.new_comit.text);
                     formData.append("images", this.attached);
-                    formData.append("_csrf", this._csrf);
                     formData.append("post_id", this.checkedPost.id);
                     this.checkedPost = '';
-
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
                     fetch(this.apiURL + this.apiVersion + route + '/commit' + '?' + new URLSearchParams(qs), {
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
                         body: formData,
                         credentials: 'include',
+                        headers: {
+                            'x-xcsrf': this._csrf
+                        },
                     })
                         .then(res => res.json())
                         .then(() => {

@@ -5,17 +5,18 @@ import Post from "../models/post";
 import Commit from "../models/Commits";
 import Tokens from "csrf";
 import {Op} from "sequelize";
-import express, {Express, Request, Response, Router} from 'express';
+import express, {Express, Request, Response, Router,NextFunction} from 'express';
 import * as fs from "fs";
 import sharp from "sharp";
 
 import {upload} from '../midleware/loadFile'
+import multer from "multer";
 
 const {PAGE_PAGINATION} = require('../constants.js');
 const router: Router = express.Router();
 const mimeTypeImg = ["image/jpg", "image/gif", "image/png"]
 
-/*  todo Dosent work in windows,
+/* todo this midleware cheking dosent work in windows,*/
 const uploadMidleware = (req: Request, res: Response, next: NextFunction) => {
     upload.single('images')(req, res, async function (err) {
             if (err instanceof multer.MulterError) res.status(400).json({error: 'More one file was uploaded'});
@@ -28,10 +29,10 @@ const uploadMidleware = (req: Request, res: Response, next: NextFunction) => {
             } else next()
         }
     )
-};*/
+};
 
 /*create new Post  todo isCorrectToken,*/
-router.post('/', upload.single('images'), isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
+router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
     if (!req.session.isAuthenticated) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
@@ -81,15 +82,6 @@ router.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInM
             text: req.body.text,
             post_id: req.body.post_id
         }])
-
-        /* const rows: Costomer[] = await Customer.findAll({
-             where: {
-                 id: req.session.customer[0].id,
-             },
-             include: [{
-                 association: 'Posts',
-             }],
-         });*/
 
         res.status(201).send(commitItem);
     } catch (e) {
@@ -247,14 +239,14 @@ router.delete('/', isCorrectToken, idValid(), checkValidationInMiddleWare, async
         console.log(e);
         res.sendStatus(400).send({'bad': false} as IResult)
     }
-    /*let curCustomer: Customer | null = await Customer.findOne({
+    /* const rows: Costomer[] = await Customer.findAll({
             where: {
-                id: {
-                    [Op.eq]: req.session.customer[0].id
-                }
-            }
-        });
-       console.log('********', await curCustomer.getCommits());*/
+                id: req.session.customer[0].id,
+            },
+            include: [{
+                association: 'Posts',
+            }],
+        });*/
 })
 
 interface IResult {
