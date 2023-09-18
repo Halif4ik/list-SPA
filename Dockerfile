@@ -1,7 +1,8 @@
-FROM node:latest
-LABEL authors="dimas"
+FROM node
 WORKDIR /app
+COPY package.json /app
+RUN yarn install
 COPY . .
-RUN npm install
-EXPOSE 3001
-CMD ["node", "app.js"]
+ENV PORT 3001
+EXPOSE $PORT
+CMD ["node", "dist/index.js"]

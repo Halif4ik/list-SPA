@@ -11,7 +11,7 @@ import Commit from "../models/Commits";
 import Post from "../models/post";
 import Customer from "../models/customer";
 
-const {SEND_GRID_API_KEY, BASE_URL, HOST_EMAIL} = require('../constants.js');
+const {SEND_GRID_API_KEY, BASE_URL, HOST_EMAIL} = require('../const.dev');
 const bcrypt = require('bcryptjs');
 /*import {bcrypt} from 'bcryptjs';*/
 const nodemailer = require('nodemailer');

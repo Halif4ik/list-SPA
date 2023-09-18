@@ -5,14 +5,15 @@ import Post from "../models/post";
 import Commit from "../models/Commits";
 import Tokens from "csrf";
 import {Op} from "sequelize";
-import express, {Express, Request, Response, Router,NextFunction} from 'express';
+import express, {Express, NextFunction, Request, Response, Router} from 'express';
 import * as fs from "fs";
 import sharp from "sharp";
 
 import {upload} from '../midleware/loadFile'
 import multer from "multer";
 
-const {PAGE_PAGINATION} = require('../constants.js');
+const PAGE_PAGINATION = process.env.PAGE_PAGINATION ? parseInt(process.env.PAGE_PAGINATION) : 25;
+
 const router: Router = express.Router();
 const mimeTypeImg = ["image/jpg", "image/gif", "image/png"]
 
