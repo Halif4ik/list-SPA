@@ -1,6 +1,6 @@
 import {DataTypes, Model} from 'sequelize'
 import Post from "./post";
-import {sequelize} from "../utils/database";
+import {sequelize} from "./indexDb";
 import Commit from './Commits';
 
 class Customer extends Model {

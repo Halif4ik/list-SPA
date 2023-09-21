@@ -3,6 +3,5 @@
 .idea
 dist
 /dist
-/public/upload
 /src/const.dev.ts
 src/const.dev.ts

@@ -1,7 +1,7 @@
 import { DataTypes, Model} from 'sequelize'
-import {sequelize} from '../utils/database';
+import {sequelize} from './indexDb';
 import Commit from "./Commits";
-import Customer from "../models/customer";
+
 class Post extends Model {
 }
 const model = Post.init({

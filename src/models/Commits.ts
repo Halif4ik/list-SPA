@@ -1,7 +1,5 @@
 import {DataTypes, Model} from 'sequelize'
-import {sequelize} from '../utils/database';
-import Customer from "./customer";
-import Post from "./post";
+import {sequelize} from './indexDb';
 
 class Commit extends Model {
 }

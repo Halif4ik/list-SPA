@@ -4,7 +4,7 @@ import {apiV1Route} from './routes/api_V1_route';
 import {apiV1LoginRegisRoute} from "./routes/api_V1_login";
 import path from "path";
 import session from "express-session";
-import {sequelize} from "./utils/database";
+import {sequelize} from "./models/indexDb";
 import {Model} from "sequelize";
 
 declare module 'express-session' {
