@@ -39,7 +39,7 @@ db.sequelize.sync({force: true}).then(() => {
            /* const json = JSON.stringify(args);
             const parameters = json.substring(1, json.length - 1);
             console.log('ip name.method (parameters)-', `${req.socket.remoteAddress} ${name}.${method}(${parameters})`);*/
-            try {
+            try {/*todo ARGS*/
                 const result = await handler(...args);
                 connection.send(JSON.stringify(result), {binary: false});
             } catch (err) {

@@ -273,7 +273,7 @@
         mounted: function () {
             socket.addEventListener('open', async () => {
                 setInterval(async () => {
-                    const answer = await api(this.pages);
+                    const answer = await api(this.currentPage,this.revert);
                     this.tasks = answer.items;
                 }, 3000);
             });
