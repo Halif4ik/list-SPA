@@ -6,6 +6,7 @@ import path from "path";
 import session from "express-session";
 import {sequelize} from "./models/indexDb";
 import {Model} from "sequelize";
+import cors from "cors";
 
 declare module 'express-session' {
     export interface SessionData {
@@ -26,6 +27,7 @@ class App {
 
     private config(): void {
         this.app.use(bodyParser.json());
+        this.app.use(cors({ origin: 'http://127.0.0.1:3001' }));
         const SequelizeStore = require('connect-session-sequelize')(session.Store);
         const sessionStore = new SequelizeStore({
             db: sequelize,

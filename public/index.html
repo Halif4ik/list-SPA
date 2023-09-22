@@ -13,7 +13,7 @@
 <body>
 <div id="app">
     <header class="header">
-        <h1 class="logo"><span style="color: rgba(255,181,60,0.9)">TestCode</span></h1>
+        <h1 class="logo"><span style="color: rgba(255,181,60,0.9)">SPA forum with Websoket</span></h1>
     </header>
     <main>
         <div class="settings">
@@ -82,7 +82,7 @@
             </div>
 
             <h5 class="status_title">{{ 'Все записи: ' + tasks.length }}</h5>
-            <task @task_del="deleteTask(task.id)"
+            <post @task_del="deleteTask(task.id)"
                   @task_edit="editTask(index)"
                   @task_done="markForCommit(index,task)"
                   @save="save(index, task.id)"
@@ -94,7 +94,7 @@
                   v-for="(task, index) in tasks"
                   :login="currentLogin"
                   :url="host"
-                  :key="index"></task>
+                  :key="index"></post>
 
             <div class="wrapper pagination" v-if="pages > 1">
                 <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx }}</button>
@@ -135,7 +135,7 @@
     </main>
 </div>
 <script>
-    Vue.component("task", {
+    Vue.component("post", {
         props: ["data", "index", "login", "url"],
         methods: {
             formatDate(value) {
@@ -204,6 +204,24 @@
     });
 
     const HOST = 'http://localhost:3001/';
+    const socket = new WebSocket('ws://localhost:3000/');
+    const methodName = "getPosts";
+    const serviceName = "posts";
+    const api = (...args) => new Promise((resolve) => {
+        const packet = {name: serviceName, method: methodName, args};
+        socket.send(JSON.stringify(packet));
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            resolve(data);
+        };
+    });
+
+    const packet = {
+        "name": "user",
+        "method": "getTasks",
+        "args": [1]
+    }
+
     const vue = new Vue({
         el: '#app',
         data: {
@@ -251,6 +269,14 @@
             userName(value) {
                 this.userNameValid = value.length > 0;
             },
+        },
+        mounted: function () {
+            socket.addEventListener('open', async () => {
+                setInterval(async () => {
+                    const answer = await api(this.pages);
+                    this.tasks = answer.items;
+                }, 3000);
+            });
         },
         methods: {
             showImg: function (url) {

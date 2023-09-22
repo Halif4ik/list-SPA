@@ -12,7 +12,7 @@ import sharp from "sharp";
 import {upload} from '../midleware/loadFile'
 import multer from "multer";
 
-const PAGE_PAGINATION = process.env.PAGE_PAGINATION ? parseInt(process.env.PAGE_PAGINATION) : 25;
+const PAGE_PAGINATION = process.env.PAGE_PAGINATION ? parseInt(process.env.PAGE_PAGINATION) : 5;
 
 const router: Router = express.Router();
 const mimeTypeImg = ["image/jpg", "image/gif", "image/png"]
@@ -98,13 +98,7 @@ router.get('/', async (req: Request, res: Response) => {
     const secret: string | undefined = req.session.secretForCustomer;
     if (secret) tokenSentToFront = await tokens.create(secret);
 
-    let reqCurrentPage: string | any = req.query.page;
-    if (isNaN(parseInt(reqCurrentPage))) reqCurrentPage = '1'
-    const revert: string | any = req.query.revert;
-    const order = revert === 'true' ? 'ASC' : 'DESC';
-
     try {
-        /*calculating all*/
         const amountAll: number = await Post.count({
             where: {
                 id: {
@@ -112,45 +106,13 @@ router.get('/', async (req: Request, res: Response) => {
                 }
             }
         });
+        const posts: Post [] = await gettingAllPosts(req.query?.page, req.query?.revert);
 
-        const posts: Post[] = await Post.findAll({
-            where: {},
-            include: [{
-                association: 'Commits',
-            }],
-            order: [
-                ['id', order],
-            ],
-            limit: PAGE_PAGINATION,
-            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage) - 1),
-        });
-
-        /*console.log('*******0', posts[1]);
-        console.log('--------', await posts[1].getCommits());
-        console.log('********', await posts[1].getCustomer());*/
-
-        /*kostil add user info in answer*/
-        for (const onePost: Post of posts) {
-            const Commits: Post = onePost['Commits'];
-            for (const currentCommit: Post of Commits) {
-                const customerWichMakeCommit = currentCommit?.customer_id;
-                const customerInfo: Customer[] = await Customer.findAll({
-                    where: {
-                        id: customerWichMakeCommit,
-                    },
-                })
-                currentCommit.dataValues['customerInfo'] = {
-                    userName: customerInfo[0].dataValues.userName,
-                    face: customerInfo[0].dataValues.face,
-                    attachedFile: customerInfo[0].dataValues?.attachedFile || '',
-                }
-            }
-        }
         res.send({
             items: posts,
             loginOfCurrentUser: req.session.customer[0].login,
             '_csrf': tokenSentToFront,
-            amountPage: Math.ceil(amountAll / PAGE_PAGINATION)
+            amountPage: Math.ceil(amountAll / PAGE_PAGINATION) || 1
         });
     } catch (e) {
         console.log(e);
@@ -253,5 +215,40 @@ router.delete('/', isCorrectToken, idValid(), checkValidationInMiddleWare, async
 interface IResult {
     [key: string]: boolean
 }
-
+export async function gettingAllPosts(needPage: string | any, revert: string | any): Post[] {
+    if (!needPage || isNaN(parseInt(needPage)) || needPage === '0') needPage = '1'
+    needPage = parseInt(needPage);
+    const order = revert === 'true' ? 'ASC' : 'DESC';
+    const posts: Post[] = await Post.findAll({
+        where: {},
+        include: [{
+            association: 'Commits',
+        }],
+        order: [
+            ['id', order],
+        ],
+        limit: PAGE_PAGINATION,
+        offset: PAGE_PAGINATION * (parseInt(needPage) - 1),
+    });
+    /* console.log('--------', await posts[1].getCommits());
+     console.log('********', await posts[1].getCustomer());*/
+    /*kostil adding  user info in answer for all Commits*/
+    for (const onePost: Post of posts) {
+        const Commits: Post = onePost['Commits'];
+        for (const currentCommit: Post of Commits) {
+            const customerWichMakeCommit = currentCommit?.customer_id;
+            const customerInfo: Customer[] = await Customer.findAll({
+                where: {
+                    id: customerWichMakeCommit,
+                },
+            })
+            currentCommit.dataValues['customerInfo'] = {
+                userName: customerInfo[0].dataValues.userName,
+                face: customerInfo[0].dataValues.face,
+                attachedFile: customerInfo[0].dataValues?.attachedFile || '',
+            }
+        }
+    }
+    return posts;
+};
 export {router as apiV1Route};
