@@ -215,6 +215,38 @@ router.delete('/', isCorrectToken, idValid(), checkValidationInMiddleWare, async
 interface IResult {
     [key: string]: boolean
 }
+
+async function observerBdChanges(callback: (needPage: string | any, revert: string | any) => Post[],
+                                 needPage: string | any, revert: string | any):Promise<Post[]> {
+    return new Promise(async (resolve, reject) => {
+        const startAmountAll: number = await Post.count({
+            where: {
+                id: {
+                    [Op.gt]: 0
+                }
+            }
+        });
+        const interval = setInterval(async () => {
+            const newAmountAll: number = await Post.count({
+                where: {
+                    id: {
+                        [Op.gt]: 0
+                    }
+                }
+            });
+            if (startAmountAll != newAmountAll) {
+                console.log('ChanGED!');
+                clearInterval(interval);
+                resolve(callback(needPage, revert));
+            }
+        }, 2000);
+    });
+}
+export async function awtingChangesAndGetAllPosts(needPage: string | any, revert: string | any):Promise<Post[]> {
+    const resolvedResult: Post[] = await observerBdChanges(gettingAllPosts, needPage, revert);
+    console.log('resolvedResult-', resolvedResult[0].dataValues['text'],resolvedResult[0].dataValues["attachedFile"]);
+    return resolvedResult;
+}
 export async function gettingAllPosts(needPage: string | any, revert: string | any): Post[] {
     if (!needPage || isNaN(parseInt(needPage)) || needPage === '0') needPage = '1'
     needPage = parseInt(needPage);

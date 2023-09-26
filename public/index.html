@@ -215,11 +215,10 @@
             resolve(data);
         };
     });
-
     const packet = {
         "name": "user",
         "method": "getTasks",
-        "args": [1]
+        "args": [1,false]
     }
 
     const vue = new Vue({
@@ -272,11 +271,10 @@
         },
         mounted: function () {
             socket.addEventListener('open', async () => {
-                setInterval(async () => {
-                    const answer = await api(this.currentPage,this.revert);
-                    this.tasks = answer.items;
-                }, 3000);
+                const answer = await api(this.currentPage, this.revert);
+                this.tasks = answer.items;
             });
+
         },
         methods: {
             showImg: function (url) {
