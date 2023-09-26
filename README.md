@@ -46,6 +46,7 @@ launch(127.0.0.1 for exmpl if it is localhost)
 Start the application.
 ```
 yarn install
+tsc
 node dist/index.js
 ```
 
