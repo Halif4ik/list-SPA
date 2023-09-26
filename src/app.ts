@@ -16,9 +16,15 @@ declare module 'express-session' {
         face: string;
     }
 }
+
+
 class App {
     public app: express.Application;
-
+    private allowedOrigins: string[] = [
+        'http://grymachtest.ddns.net',
+        'http://91.214.247.147',
+        'http://127.0.0.1:3001',
+    ];
     constructor() {
         this.app = express();
         this.config();
@@ -27,7 +33,16 @@ class App {
 
     private config(): void {
         this.app.use(bodyParser.json());
-        this.app.use(cors({ origin: 'http://127.0.0.1:3001' }));
+        this.app.use(cors({origin: this.allowedOrigins, credentials: true}));
+        /*this.app.use(cors({
+            origin: (origin, callback): void => {
+                console.log('this.allowedOrigins-',this.allowedOrigins);
+                console.log('origin-',origin);
+                if (this.allowedOrigins.includes(origin)) callback(null, true);
+                else callback(new Error('Not allowed by CORS'));
+            },
+        }));
+   */
         const SequelizeStore = require('connect-session-sequelize')(session.Store);
         const sessionStore = new SequelizeStore({
             db: sequelize,
@@ -42,7 +57,7 @@ class App {
         }));
         this.app.use(bodyParser.urlencoded({extended: true}));
         this.app.use(express.static(path.join(__dirname, '../public')));
-        this.app.use('/static',express.static(path.join(__dirname, '../public/upload')));
+        this.app.use('/static', express.static(path.join(__dirname, '../public/upload')));
     }
 
     private allRoutes(): void {

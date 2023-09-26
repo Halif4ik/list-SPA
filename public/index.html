@@ -271,8 +271,14 @@
         },
         mounted: function () {
             socket.addEventListener('open', async () => {
-                const answer = await api(this.currentPage, this.revert);
-                this.tasks = answer.items;
+                const packet = {name: serviceName, method: methodName,args: [this.currentPage, this.revert]};
+                socket.send(JSON.stringify(packet));
+            });
+            socket.addEventListener('message', async (event) => {
+                const data = JSON.parse(event.data);
+                this.tasks = data.items;
+                const packet = {name: serviceName, method: methodName,args: [this.currentPage, this.revert]};
+                socket.send(JSON.stringify(packet));
             });
 
         },

@@ -11,6 +11,7 @@ export const sequelize: Sequelize = new Sequelize(DB, USER, PASSWORD, {
     dialect: "mysql",
     port: port,
     operatorsAliases: false,
+    logging: false,
 
     pool: {
         max: 5,
