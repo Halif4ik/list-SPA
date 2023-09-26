@@ -81,6 +81,7 @@
                 </label>
             </div>
 
+
             <h5 class="status_title">{{ 'Все записи: ' + tasks.length }}</h5>
             <post @task_del="deleteTask(task.id)"
                   @task_edit="editTask(index)"
@@ -202,7 +203,6 @@
           </div>
         `
     });
-
     const HOST = 'http://localhost:3001/';
     const socket = new WebSocket('ws://localhost:3000/');
     const methodName = "getPosts";
