@@ -30,19 +30,9 @@ class App {
         this.config();
         this.allRoutes();
     }
-
     private config(): void {
         this.app.use(bodyParser.json());
         this.app.use(cors({origin: this.allowedOrigins, credentials: true}));
-        /*this.app.use(cors({
-            origin: (origin, callback): void => {
-                console.log('this.allowedOrigins-',this.allowedOrigins);
-                console.log('origin-',origin);
-                if (this.allowedOrigins.includes(origin)) callback(null, true);
-                else callback(new Error('Not allowed by CORS'));
-            },
-        }));
-   */
         const SequelizeStore = require('connect-session-sequelize')(session.Store);
         const sessionStore = new SequelizeStore({
             db: sequelize,

@@ -207,19 +207,11 @@
     const socket = new WebSocket('ws://localhost:3000/');
     const methodName = "getPosts";
     const serviceName = "posts";
-    const api = (...args) => new Promise((resolve) => {
-        const packet = {name: serviceName, method: methodName, args};
-        socket.send(JSON.stringify(packet));
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            resolve(data);
-        };
-    });
-    const packet = {
-        "name": "user",
-        "method": "getTasks",
+    /*const packet = {
+        "name": "posts",
+        "method": "getPosts",
         "args": [1,false]
-    }
+    }*/
 
     const vue = new Vue({
         el: '#app',

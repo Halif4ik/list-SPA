@@ -4,7 +4,7 @@ import Commit from "./Commits";
 
 class Post extends Model {
 }
-const model = Post.init({
+ Post.init({
     id: {
         primaryKey: true,
         autoIncrement: true,
@@ -23,10 +23,10 @@ const model = Post.init({
 
 }, {sequelize, tableName: 'PostsList'});
 
-model.hasMany(Commit, {as: 'Commits', foreignKey: 'post_id'});
+Post.hasMany(Commit, {as: 'Commits', foreignKey: 'post_id'});
 /*model.belongsTo(Customer, {targetKey: 'id'});*/
 /*model.belongsTo(Customer, { as: 'Customer',targetKey: 'id',foreignKey: 'customer_id' });*/
-export default model;
+export default Post;
 
 
 

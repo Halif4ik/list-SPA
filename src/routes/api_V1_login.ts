@@ -66,7 +66,7 @@ router.post('/logout', async (req: Request, res: Response) => {
     try {
         const registeredCustomer = req.session.customer
         /*console.log('!!instanceof---',  req.session.customer instanceof (Model<CustomerModelStatic>));*/
-        if (!registeredCustomer.length) return res.send({errors: [{"msg": "Wrong Logout",}]});
+        if (!registeredCustomer || !registeredCustomer.length) return res.send({errors: [{"msg": "Wrong Logout",}]});
         else {
             req.session.isAuthenticated = false;
             req.session.secretForCustomer = '';

@@ -12,7 +12,8 @@ import sharp from "sharp";
 import {upload} from '../midleware/loadFile'
 import multer from "multer";
 
-const PAGE_PAGINATION = process.env.PAGE_PAGINATION ? parseInt(process.env.PAGE_PAGINATION) : 5;
+type FormatEnum = 'jpg' | 'png' | 'gif';
+const PAGE_PAGINATION: number = process.env.PAGE_PAGINATION ? parseInt(process.env.PAGE_PAGINATION) : 5;
 
 const router: Router = express.Router();
 const mimeTypeImg = ["image/jpg", "image/gif", "image/png"]
@@ -34,20 +35,22 @@ const uploadMidleware = (req: Request, res: Response, next: NextFunction) => {
 
 /*create new Post  todo isCorrectToken,*/
 router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
-    if (!req.session.isAuthenticated) {
+    if (!req.session.isAuthenticated || !req.session.customer) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
     }
     const attachedFile: Express.Multer.File | undefined = req.file;
+    const extentionImg = attachedFile?.mimetype && attachedFile.mimetype.slice(-3) as FormatEnum ? attachedFile.mimetype.slice(-3) : 'png';
+
     try {
         // Resize the image to PNG format (you can adjust the options)
         if (attachedFile && mimeTypeImg.includes(attachedFile.mimetype)) {
             const resizedImageBuffer: Buffer = await sharp(attachedFile.path)
                 .resize({width: 320, height: 240})
-                .toFormat(attachedFile.mimetype.slice(-3))
+                .toFormat(extentionImg)
                 .toBuffer();
             // Save the resized image to a new file
-            fs.writeFile(attachedFile.path, resizedImageBuffer, async (writeErr) => {
+            fs.writeFile(attachedFile.path, resizedImageBuffer, async (writeErr: NodeJS.ErrnoException | null) => {
                 if (writeErr) {
                     console.error('Error writing resized image:', writeErr);
                     return res.sendStatus(500);
@@ -72,8 +75,8 @@ router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkVa
 });
 
 /*create COMENT for Post todo move to POST*/
-router.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
-    if (!req.session.isAuthenticated) {
+router.post('/commit', isCorrectToken, uploadMidleware, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+    if (!req.session.isAuthenticated || !req.session.customer) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
     }
@@ -92,7 +95,7 @@ router.post('/commit', isCorrectToken, textValidMiddleware(), checkValidationInM
 });
 /*getAll*/
 router.get('/', async (req: Request, res: Response) => {
-    if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
+    if (!req.session.isAuthenticated || !req.session.customer) return res.send({error: 'forbidden'});
     const tokens: Tokens = new Tokens();
     let tokenSentToFront;
     const secret: string | undefined = req.session.secretForCustomer;
@@ -121,47 +124,10 @@ router.get('/', async (req: Request, res: Response) => {
 });
 /*getAll for only Current User*/
 router.get('/my', async (req: Request, res: Response) => {
-    if (!req.session.isAuthenticated) return res.send({error: 'forbidden'});
-    let reqCurrentPage: string | any = req.query.page;
-    if (isNaN(parseInt(reqCurrentPage))) reqCurrentPage = '1'
-
-    const reqRevert: string | any = req.query.revert;
-    const order = reqRevert === 'true' ? 'ASC' : 'DESC';
-
+    if (!req.session.isAuthenticated || !req.session.customer) return res.send({error: 'forbidden'});
     try {
-        const myPosts = await Post.findAll({
-            where: {
-                login: req.session.customer[0].login
-            },
-            include: [{
-                association: 'Commits',
-            }],
-            order: [
-                ['createdAt', order],
-            ],
-            limit: PAGE_PAGINATION,
-            offset: PAGE_PAGINATION * (parseInt(reqCurrentPage) - 1),
-        });
-
-        /*kostil add user info to response array*/
-        for (const onePost of myPosts) {
-            const Commits = onePost['Commits'];
-            for (const currentCommit of Commits) {
-                const customerWichMakeCommit = currentCommit?.customer_id;
-                const customerInfo = await Customer.findAll({
-                    where: {
-                        id: customerWichMakeCommit,
-                    },
-                })
-                currentCommit.dataValues['customerInfo'] = {
-                    userName: customerInfo[0].dataValues.userName,
-                    face: customerInfo[0].dataValues.face,
-                }
-            }
-        }
-
+        const myPosts: Post [] = await gettingAllPosts(req.query?.page, req.query?.revert, {login: req.session.customer[0].login});
         res.send({items: myPosts});
-
     } catch (e) {
         console.log(e);
         res.sendStatus(404)
@@ -217,16 +183,23 @@ interface IResult {
 }
 
 async function observerBdChanges(callback: (needPage: string | any, revert: string | any) => Post[],
-                                 needPage: string | any, revert: string | any):Promise<Post[]> {
+                                 needPage: string | any, revert: string | any): Promise<Post[]> {
     return new Promise(async (resolve, reject) => {
-        const startAmountAll: number = await Post.count({
+        const startAmountPosts: number = await Post.count({
             where: {
                 id: {
                     [Op.gt]: 0
                 }
             }
         });
-        const interval = setInterval(async () => {
+        const startAmountCommits: number = await Commit.count({
+            where: {
+                id: {
+                    [Op.gt]: 0
+                }
+            }
+        });
+        const interval: NodeJS.Timeout = setInterval(async () => {
             const newAmountAll: number = await Post.count({
                 where: {
                     id: {
@@ -234,25 +207,31 @@ async function observerBdChanges(callback: (needPage: string | any, revert: stri
                     }
                 }
             });
-            if (startAmountAll != newAmountAll) {
-                console.log('ChanGED!');
+            if (startAmountPosts != newAmountAll || startAmountCommits != await Commit.count({
+                where: {
+                    id: {
+                        [Op.gt]: 0
+                    }
+                }
+            })) {
                 clearInterval(interval);
                 resolve(callback(needPage, revert));
             }
         }, 2000);
     });
 }
-export async function awtingChangesAndGetAllPosts(needPage: string | any, revert: string | any):Promise<Post[]> {
+
+export async function awtingChangesAndGetAllPosts(needPage: string | any, revert: string | any): Promise<Post[]> {
     const resolvedResult: Post[] = await observerBdChanges(gettingAllPosts, needPage, revert);
-    console.log('resolvedResult-', resolvedResult[0].dataValues['text'],resolvedResult[0].dataValues["attachedFile"]);
     return resolvedResult;
 }
-export async function gettingAllPosts(needPage: string | any, revert: string | any): Post[] {
+
+async function gettingAllPosts(needPage: string | any, revert: string | any, whereParams = null) {
     if (!needPage || isNaN(parseInt(needPage)) || needPage === '0') needPage = '1'
     needPage = parseInt(needPage);
     const order = revert === 'true' ? 'ASC' : 'DESC';
     const posts: Post[] = await Post.findAll({
-        where: {},
+        where: whereParams ? whereParams : {},
         include: [{
             association: 'Commits',
         }],
@@ -262,8 +241,6 @@ export async function gettingAllPosts(needPage: string | any, revert: string | a
         limit: PAGE_PAGINATION,
         offset: PAGE_PAGINATION * (parseInt(needPage) - 1),
     });
-    /* console.log('--------', await posts[1].getCommits());
-     console.log('********', await posts[1].getCustomer());*/
     /*kostil adding  user info in answer for all Commits*/
     for (const onePost: Post of posts) {
         const Commits: Post = onePost['Commits'];
@@ -273,11 +250,11 @@ export async function gettingAllPosts(needPage: string | any, revert: string | a
                 where: {
                     id: customerWichMakeCommit,
                 },
-            })
+            });
             currentCommit.dataValues['customerInfo'] = {
-                userName: customerInfo[0].dataValues.userName,
-                face: customerInfo[0].dataValues.face,
-                attachedFile: customerInfo[0].dataValues?.attachedFile || '',
+                userName: customerInfo[0].userName,
+                face: customerInfo[0].face,
+                attachedFile: customerInfo[0].attachedFile || '',
             }
         }
     }
