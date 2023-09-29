@@ -19,7 +19,6 @@ async function read(needPage: string | any, revert: string | any): Promise<{ ite
         console.log(e);
     }
 }
-
 const routing = {
     posts: {
         getPosts(args: string []): Promise<{ items: Post[] } | undefined> {
@@ -28,7 +27,7 @@ const routing = {
     },
 };
 
-db.sequelize.sync({force: true}).then((): void => {
+db.sequelize.sync({force: false}).then((): void => {
     const ws = new Server({port: portWs});
     ws.on('connection', (connection, req): void => {
         connection.on('message', async (message) => {

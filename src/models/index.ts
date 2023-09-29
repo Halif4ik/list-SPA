@@ -1,8 +1,6 @@
 const Sequelize = require("sequelize");
 import {sequelize} from './indexDb'
-import Post from "./post";
-import Commit from './Commits';
-import Customer from "../models/customer";
+import {Commit,Post,Customer} from './modelsDb';
 export const db = {
     Sequelize : Sequelize,
     sequelize : sequelize,

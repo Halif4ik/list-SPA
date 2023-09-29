@@ -108,7 +108,7 @@ main {
     margin: 35px auto;
 }
 
-.task {
+.post {
     display: flex;
     flex-direction: row-reverse;
     flex-wrap: wrap;
@@ -291,7 +291,7 @@ hr {
     top: 245px;
 }
 
-.wrapper .task .commits-section {
+.wrapper .post .commits-section {
     margin-left: 50px;
     display: flex;
     flex-direction: column;
@@ -301,7 +301,7 @@ hr {
     border: 2px solid rgba(0, 0, 0, .08);
 }
 
-.wrapper .task .commits-section .headerContent {
+.wrapper .post .commits-section .headerContent {
     padding: 0px 5px;
 }
 

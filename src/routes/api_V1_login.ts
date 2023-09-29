@@ -6,7 +6,7 @@ import {
     passwordValidInBodyMiddleware,
 } from "../midleware/validator";
 import Tokens from 'csrf';
-import Customer from "../models/customer";
+import {Commit,Post,Customer} from '../models/modelsDb';
 /*import {bcrypt} from 'bcryptjs';*/
 const bcrypt = require('bcryptjs');
 const router = express.Router();
@@ -113,7 +113,7 @@ router.post('/register', emailValidMiddleware(), passwordValidInBodyMiddleware()
                 csrf: secretForCustomer
             });
             /*todo mailer upgrate plan*/
-            await mailer.sendMail({
+           /* await mailer.sendMail({
                 to: [login],
                 from: HOST_EMAIL,
                 subject: `Hi ${userName} you  are registered on SPA todo-List`,
@@ -124,7 +124,7 @@ router.post('/register', emailValidMiddleware(), passwordValidInBodyMiddleware()
                     <a href="${BASE_URL}">Our SPA toto-list</a>`
             }, function (err: Request, res: Response): void {
                 if (err) console.log('errSendMail-', err)
-            });
+            });*/
 
             res.status(200).send({'ok': true} as IResult);
         } catch (e) {

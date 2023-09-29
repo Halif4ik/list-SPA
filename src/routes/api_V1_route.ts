@@ -1,8 +1,9 @@
 import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
 import {isCorrectToken} from "../midleware/iscorectToken";
-import Customer from "../models/customer";
+/*import Customer from "../models/customer";
 import Post from "../models/post";
-import Commit from "../models/Commits";
+import Commit from "../models/Commits";*/
+import {Commit, Customer, Post} from '../models/modelsDb';
 import Tokens from "csrf";
 import {Op} from "sequelize";
 import express, {Express, NextFunction, Request, Response, Router} from 'express';
@@ -61,7 +62,7 @@ router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkVa
         const postItem: Post[] = await Post.bulkCreate([{
             checked: req.body.done === 'true',
             text: req.body.text,
-            customer_id: req.session.customer[0].id,
+            CustomerId: req.session.customer[0].id,
             attachedFile: attachedFile ? attachedFile.filename : '',
             login: req.session.customer[0].login,
             userName: req.session.customer[0].userName,
@@ -82,7 +83,7 @@ router.post('/commit', isCorrectToken, uploadMidleware, textValidMiddleware(), c
     }
     try {
         const commitItem: Commit = await Commit.bulkCreate([{
-            customer_id: req.session.customer[0].id,
+            CustomerId: req.session.customer[0].id,
             text: req.body.text,
             post_id: req.body.post_id
         }])
@@ -100,7 +101,6 @@ router.get('/', async (req: Request, res: Response) => {
     let tokenSentToFront;
     const secret: string | undefined = req.session.secretForCustomer;
     if (secret) tokenSentToFront = await tokens.create(secret);
-
     try {
         const amountAll: number = await Post.count({
             where: {
@@ -110,7 +110,7 @@ router.get('/', async (req: Request, res: Response) => {
             }
         });
         const posts: Post [] = await gettingAllPosts(req.query?.page, req.query?.revert);
-
+       /* console.log(JSON.stringify(SSS, null, 2));*/
         res.send({
             items: posts,
             loginOfCurrentUser: req.session.customer[0].login,
@@ -168,14 +168,6 @@ router.delete('/', isCorrectToken, idValid(), checkValidationInMiddleWare, async
         console.log(e);
         res.sendStatus(400).send({'bad': false} as IResult)
     }
-    /* const rows: Costomer[] = await Customer.findAll({
-            where: {
-                id: req.session.customer[0].id,
-            },
-            include: [{
-                association: 'Posts',
-            }],
-        });*/
 })
 
 interface IResult {
@@ -183,16 +175,16 @@ interface IResult {
 }
 
 async function observerBdChanges(callback: (needPage: string | any, revert: string | any) => Post[],
-                                 needPage: string | any, revert: string | any): Promise<Post[]> {
+                                 needPage: string | any, revert: string | any) {
     return new Promise(async (resolve, reject) => {
-        const startAmountPosts: number = await Post.count({
+        const startAmountPosts = await Post.count({
             where: {
                 id: {
                     [Op.gt]: 0
                 }
             }
         });
-        const startAmountCommits: number = await Commit.count({
+        const startAmountCommits = await Commit.count({
             where: {
                 id: {
                     [Op.gt]: 0
@@ -200,7 +192,7 @@ async function observerBdChanges(callback: (needPage: string | any, revert: stri
             }
         });
         const interval: NodeJS.Timeout = setInterval(async () => {
-            const newAmountAll: number = await Post.count({
+            const newAmountAll = await Post.count({
                 where: {
                     id: {
                         [Op.gt]: 0
@@ -232,20 +224,34 @@ async function gettingAllPosts(needPage: string | any, revert: string | any, whe
     const order = revert === 'true' ? 'ASC' : 'DESC';
     const posts: Post[] = await Post.findAll({
         where: whereParams ? whereParams : {},
-        include: [{
+        include: {
             association: 'Commits',
-        }],
+            include: [
+                {
+                    model: Commit,
+                    as: 'Children',
+                    attributes:['id','CustomerId','text']
+                },
+                {
+                    model: Commit,
+                    as: 'Parent',
+                    attributes:['id','post_id','text']
+                }
+            ]
+        },
         order: [
             ['id', order],
         ],
         limit: PAGE_PAGINATION,
         offset: PAGE_PAGINATION * (parseInt(needPage) - 1),
     });
+
+
     /*kostil adding  user info in answer for all Commits*/
     for (const onePost: Post of posts) {
         const Commits: Post = onePost['Commits'];
         for (const currentCommit: Post of Commits) {
-            const customerWichMakeCommit = currentCommit?.customer_id;
+            const customerWichMakeCommit = currentCommit?.CustomerId;
             const customerInfo: Customer[] = await Customer.findAll({
                 where: {
                     id: customerWichMakeCommit,

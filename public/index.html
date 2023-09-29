@@ -29,7 +29,6 @@
             <div style="display: none">
                 <button @click="apiVersion='v1'" :class="{'selected': apiVersion === 'v1'}">v1</button>
             </div>
-
             <div>
                 <button @click="getTasks()" class="primary btn">Поехали</button>
             </div>
@@ -69,8 +68,9 @@
                         <input class="file-path" type="text">
                     </div>
                     <span><input type="submit" @click="addPost"
-                                 class="button new_todo_button" value="Постить"><input></span>
+                                 class="button new_todo_button" value="Постить"></span>
                 </div>
+
             </div>
             <div v-else>
                 <label style="display: flex;">
@@ -81,11 +81,11 @@
                 </label>
             </div>
 
-
             <h5 class="status_title">{{ 'Все записи: ' + tasks.length }}</h5>
             <post @task_del="deleteTask(task.id)"
                   @task_edit="editTask(index)"
                   @task_done="markForCommit(index,task)"
+                  @commit_done="markCommitForCommit(index,task)"
                   @save="save(index, task.id)"
                   @disable="disable(index)"
                   @show_img="showImg(host +'static/' + task.attachedFile)"
@@ -100,10 +100,8 @@
             <div class="wrapper pagination" v-if="pages > 1">
                 <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx }}</button>
             </div>
-
             <hr>
             <button @click="logout" class="logout btn btm-small js-remove">Выйти &#128682;</button>
-
             <button v-if="!this.revert" @click="setRevert(true)" class="logout btn btm-small js-remove">Revert</button>
             <button v-else="this.revert" @click="setRevert(false)" class="logout btn btm-small js-remove">LIFO
             </button>
@@ -128,7 +126,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
         <div class="wrapper" v-else-if="step === 'error'">
             Произошла ошибка. Откройте консоль разработчика чтоб увидеть подробности.
@@ -136,8 +133,34 @@
     </main>
 </div>
 <script>
-    Vue.component("post", {
+    Vue.component("commit", {
         props: ["data", "index", "login", "url"],
+        methods: {
+            formatDate(value) {
+                // Add your date formatting logic here
+            },
+        },
+        template: `
+    <div class="commit" :data-parent_id="data.id">
+      <div class="headerContent">
+        <div>
+          <button @click="$emit('commit_done')" class="task_done taskButton">
+            <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
+            <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
+          </button>
+          <a class="task_face">{{ String.fromCodePoint(data?.customerInfo.face) }}</a>
+          <span class="task_head"><strong>{{ data?.customerInfo.userName }}</strong> {{ formatDate(data.createdAt) }}</span>
+        </div>
+      </div>
+      <div class="task_content"> {{ data.text }}</div>
+      <div class="children-commits-section"></div>
+    </div>
+  `,
+    });
+
+
+    Vue.component("post", {
+        props: ["data", "index", "login", "url"], /*{data:{type:Array,required:true}}*/
         methods: {
             formatDate(value) {
                 const options = {
@@ -151,7 +174,7 @@
             },
         },
         template: `
-          <div class="task" v-bind:class="{ taskCompleted: data.checked}">
+          <div class="post" :data-post_id="data.id" v-bind:class="{ taskCompleted: data.checked}">
           <div class="headerContent">
             <div>
               <button @click="$emit('task_done')" class="task_done taskButton">
@@ -190,16 +213,19 @@
                                                     class="edit-input"/>
           </div>
 
-          <div v-if="data.Commits.length > 0" class="commits-section">
-            <div v-for="(commit, commitIndex) in data.Commits" :key="commitIndex" class="commit">
-              <div class="headerContent">
-                <a class="task_face">{{ String.fromCodePoint(commit.customerInfo.face) }}</a>
-                <span class="task_head"><strong>{{ commit.customerInfo.userName }}</strong>
-                  {{ formatDate(commit.createdAt) }}</span>
-              </div>
-              <div class="task_content"> {{ commit.text }}</div>
-            </div>
+          <div v-if="data.Commits.length" class="commits-section">
+            <commit
+                v-for="(commit, commitIndex) in data.Commits"
+                v-if="!commit.Parent"
+                :key="commitIndex"
+                :data="commit"
+                :index="commitIndex"
+                :login="login"
+                :url="url"
+                @commit_done="$emit('commit_done')"
+            ></commit>
           </div>
+
           </div>
         `
     });
@@ -240,7 +266,7 @@
             apiVersion: 'v1',
             step: '',
             posting: true,
-            checkedPost: '',
+            checkedost: '',
             ePlaceHolder: 'yaropolk@example.com',
             emailValid: true,
             userNameValid: true,
@@ -263,18 +289,39 @@
         },
         mounted: function () {
             socket.addEventListener('open', async () => {
-                const packet = {name: serviceName, method: methodName,args: [this.currentPage, this.revert]};
+                const packet = {name: serviceName, method: methodName, args: [this.currentPage, this.revert]};
                 socket.send(JSON.stringify(packet));
             });
             socket.addEventListener('message', async (event) => {
                 const data = JSON.parse(event.data);
                 this.tasks = data.items;
-                const packet = {name: serviceName, method: methodName,args: [this.currentPage, this.revert]};
+                const packet = {name: serviceName, method: methodName, args: [this.currentPage, this.revert]};
                 socket.send(JSON.stringify(packet));
             });
 
         },
         methods: {
+            containChildrens: function () {
+                const posts = document.querySelectorAll('.wrapper .post');
+
+                posts.forEach(post => {
+                    const dataForCurrentPost = this.tasks.find((onePost) => parseInt(post.dataset.post_id) === onePost.id);
+                    if (dataForCurrentPost.Commits.length) {
+                        const parentComment = post.querySelector('.commit[data-parent_id]');
+                        const dataParentComment = dataForCurrentPost.Commits.find((oneComment) => parseInt(parentComment.dataset.parent_id) === oneComment.id);
+                        const placeForChildren = parentComment.querySelector('.commits-section');
+
+                        console.log(`placeForChildren-`, placeForChildren);
+                        console.log(`dataParentComment-`, dataParentComment);
+                    }
+                });
+                this.tasks.forEach(post => {
+                    /* console.log(`i-`, post.Commits.length);*/
+                    post.Commits.forEach(comment => {
+                    })
+                });
+
+            },
             showImg: function (url) {
                 const lightbox = document.getElementById('lightbox');
                 const lightboxOverlay = document.getElementById('lightboxOverlay');
@@ -332,6 +379,10 @@
                                 return item
                             })
                             this.step = 'items';
+                            /*todo del*/
+                            setTimeout(() => {
+                                this.containChildrens()
+                            }, 1000);
                         }
                     }).catch((error) => {
                     this.step = 'error';
@@ -391,8 +442,8 @@
                     const formData = new FormData();
                     formData.append("text", this.new_comit.text);
                     formData.append("images", this.attached);
-                    formData.append("post_id", this.checkedPost.id);
-                    this.checkedPost = '';
+                    formData.append("post_id", this.checkedost.id);
+                    this.checkedost = '';
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'editItem'};
                     fetch(this.apiURL + this.apiVersion + route + '/commit' + '?' + new URLSearchParams(qs), {
@@ -433,14 +484,25 @@
                     });
             },
             markForCommit(index, task) {
-                if (!this.checkedPost) {
+                if (!this.checkedost) {
                     this.$set(this.tasks[index], 'checked', !this.tasks[index].checked);
                     this.posting = !this.posting;
-                    this.checkedPost = task;
-                } else if (this.checkedPost.id === task.id) {
+                    this.checkedost = task;
+                } else if (this.checkedost.id === task.id) {
                     this.$set(this.tasks[index], 'checked', !this.tasks[index].checked);
                     this.posting = !this.posting;
-                    this.checkedPost = '';
+                    this.checkedost = '';
+                }
+            },
+            markCommitForCommit(index, task) {
+                if (!this.checkedost) {
+                    this.$set(this.tasks[index], 'checked', !this.tasks[index].checked);
+                    this.posting = !this.posting;
+                    this.checkedost = task;
+                } else if (this.checkedost.id === task.id) {
+                    this.$set(this.tasks[index], 'checked', !this.tasks[index].checked);
+                    this.posting = !this.posting;
+                    this.checkedost = '';
                 }
             },
             editTask(index) {
