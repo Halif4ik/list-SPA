@@ -230,7 +230,7 @@ async function gettingAllPosts(needPage: string | any, revert: string | any, whe
                 {
                     model: Commit,
                     as: 'Children',
-                    attributes:['id','CustomerId','text']
+                    attributes:['id','CustomerId','text','createdAt']
                 },
                 {
                     model: Commit,

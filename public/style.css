@@ -292,13 +292,17 @@ hr {
 }
 
 .wrapper .post .commits-section {
-    margin-left: 50px;
     display: flex;
     flex-direction: column;
     width: 100%;
     padding: 2px 5px;
     flex-wrap: nowrap;
+    padding-left: 50px;
+}
+.wrapper .post .commits-section .commit {
     border: 2px solid rgba(0, 0, 0, .08);
+    margin: 3px -5px;
+    padding: 2px 5px;
 }
 
 .wrapper .post .commits-section .headerContent {

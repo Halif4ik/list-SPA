@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+`
+<div class="commit" :data-parent_id="dataCommit.id">
+  {{dataCommit}}
+  <div class="headerContent">
+    <div>
+      <button @click="$emit('commit_done')" class="task_done taskButton">
+        <span v-if="!dataCommit?.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
+        <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
+      </button>
+      <a class="task_face">{{ String.fromCodePoint(dataCommit?.customerInfo.face) }}</a>
+      <span class="task_head"><strong>{{ dataCommit?.customerInfo?.userName }}</strong> {{ formatDate(dataCommit?.createdAt) }}</span>
+    </div>
+  </div>
+  <div class="task_content"> {{ dataCommit.text }}</div>
+  <div class="children-commits-section"></div>
+</div>
+`
+</body>
+</html>

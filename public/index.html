@@ -95,7 +95,7 @@
                   v-for="(task, index) in tasks"
                   :login="currentLogin"
                   :url="host"
-                  :key="index"></post>
+                  :key="'post-'+ index"></post>
 
             <div class="wrapper pagination" v-if="pages > 1">
                 <button @click="getTasks(idx)" v-for="idx in pages" class="each-page">{{ idx }}</button>
@@ -134,28 +134,51 @@
 </div>
 <script>
     Vue.component("commit", {
-        props: ["data", "index", "login", "url"],
+        props: ["dataCurCommit", "index", "commitsCurentPost"],
         methods: {
+            getInfo: function (currentId, commitsOfCurrentPost) {
+                const dataForCurrentPost = commitsOfCurrentPost.find(commitOfCurrentPost => parseInt(currentId) === parseInt(commitOfCurrentPost.id));
+                const temp = dataForCurrentPost;
+                console.log('found-', temp);/*todo*/
+                return temp
+            },
             formatDate(value) {
-                // Add your date formatting logic here
+                const options = {
+                    day: '2-digit',
+                    month: 'long',
+                    year: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                };
+                return new Intl.DateTimeFormat('ru-RU', options).format(new Date(value));
             },
         },
         template: `
-    <div class="commit" :data-parent_id="data.id">
-      <div class="headerContent">
-        <div>
-          <button @click="$emit('commit_done')" class="task_done taskButton">
-            <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
-            <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
-          </button>
-          <a class="task_face">{{ String.fromCodePoint(data?.customerInfo.face) }}</a>
-          <span class="task_head"><strong>{{ data?.customerInfo.userName }}</strong> {{ formatDate(data.createdAt) }}</span>
-        </div>
-      </div>
-      <div class="task_content"> {{ data.text }}</div>
-      <div class="children-commits-section"></div>
-    </div>
-  `,
+          <div class="commit" :data-parent_id="dataCurCommit.id">
+            <div class="headerContent">
+              <div>
+                <button @click="$emit('commit_done')" class="task_done taskButton">
+                  <span v-if="!(getInfo(dataCurCommit.id, commitsCurentPost).checkedCom)" style="color: rgba(0,0,0,.28);"> ☐ </span>
+                  <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
+                </button>
+                <a class="task_face">{{ String.fromCodePoint(getInfo(dataCurCommit.id, commitsCurentPost).customerInfo.face) }}</a>
+                <span class="task_head"><strong>{{ getInfo(dataCurCommit.id, commitsCurentPost).customerInfo.userName }}</strong> {{ formatDate(dataCurCommit.createdAt) }}</span>
+              </div>
+            </div>
+            <div class="task_content"> {{ dataCurCommit.text }}</div>
+            <div v-if="getInfo(dataCurCommit.id, commitsCurentPost).Children.length" class="children commits-section">
+
+              <commit
+                  v-for="(commit, commitIndex) in getInfo(dataCurCommit.id, commitsCurentPost).Children"
+                  :key="'commitNext-'+ commitIndex"
+                  :dataCurCommit="commit"
+                  :index="commitIndex"
+                  :commitsCurentPost="commitsCurentPost"
+                  @commit_done="$emit('commit_done')"
+              ></commit>
+            </div>
+          </div>
+        `,
     });
 
 
@@ -175,56 +198,75 @@
         },
         template: `
           <div class="post" :data-post_id="data.id" v-bind:class="{ taskCompleted: data.checked}">
-          <div class="headerContent">
-            <div>
-              <button @click="$emit('task_done')" class="task_done taskButton">
-                <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
-                <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
-              </button>
-              <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
-              <span class="task_head"><strong>{{ data.userName }}</strong> {{ formatDate(data.createdAt) }}</span>
-            </div>
-            <div v-if="login === data.login">
-              <div class="button check" v-if="!data.editable">
-                <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
-                <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
-                <button v-if="data.userName" @click="$emit('get_my_tasks')" style="color: #15cd2e;">🔎</button>
+            <div class="headerContent">
+              <div>
+                <button @click="$emit('task_done')" class="task_done taskButton">
+                  <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
+                  <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
+                </button>
+                <a class="task_face">{{ String.fromCodePoint(data.face) }}</a>
+                <span class="task_head"><strong>{{ data.userName }}</strong> {{ formatDate(data.createdAt) }}</span>
               </div>
-              <div v-else>
-                <button @click="$emit('save')"> 💾</button>
-                <button @click="$emit('disable')"> ✕</button>
+              <div v-if="login === data.login">
+                <div class="button check" v-if="!data.editable">
+                  <button @click="$emit('task_edit')" style="color: #eca81a;"> ✎️</button>
+                  <button @click="$emit('task_del')" style="color: #cd1537;"> ✕</button>
+                  <button v-if="data.userName" @click="$emit('get_my_tasks')" style="color: #15cd2e;">🔎</button>
+                </div>
+                <div v-else>
+                  <button @click="$emit('save')"> 💾</button>
+                  <button @click="$emit('disable')"> ✕</button>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="task_content" v-if="!data.editable">
-            <p>{{ data.text }}</p>
-            <a v-if="data.attachedFile && !data.attachedFile.includes('.txt')" class="img"
-               @click="$emit('show_img')"><img class="task_content" style="width:100px" loading="lazy"
-                                               :src="url+'static/' + data.attachedFile"><img>
-            </a>
-            <a v-else-if="data.attachedFile" class="img"
-               @click="$emit('show_img')">
-              <img class="task_content" style="width:30px" loading="lazy"
-                   :src="url+'static/txt.png'"><img>
-            </a>
-          </div>
-          <div class="corectPost" v-else>
-            {{ formatDate(data.updatedAt) }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
-                                                    class="edit-input"/>
-          </div>
+            <div class="task_content" v-if="!data.editable">
+              <p>{{ data.text }}</p>
+              <a v-if="data.attachedFile && !data.attachedFile.includes('.txt')" class="img"
+                 @click="$emit('show_img')"><img class="task_content" style="width:100px" loading="lazy"
+                                                 :src="url+'static/' + data.attachedFile"><img>
+              </a>
+              <a v-else-if="data.attachedFile" class="img"
+                 @click="$emit('show_img')">
+                <img class="task_content" style="width:30px" loading="lazy"
+                     :src="url+'static/txt.png'"><img>
+              </a>
+            </div>
+            <div class="corectPost" v-else>
+              {{ formatDate(data.updatedAt) }}.<input @keyup.enter="$emit('save')" v-model="data.inputedit" autofocus
+                                                      class="edit-input"/>
+            </div>
 
-          <div v-if="data.Commits.length" class="commits-section">
-            <commit
-                v-for="(commit, commitIndex) in data.Commits"
-                v-if="!commit.Parent"
-                :key="commitIndex"
-                :data="commit"
-                :index="commitIndex"
-                :login="login"
-                :url="url"
-                @commit_done="$emit('commit_done')"
-            ></commit>
-          </div>
+            <div v-if="data.Commits.length" class="commits-section">
+
+              <div v-for="(commit, commitIndex) in data.Commits" v-if="!commit.Parent" :key="commitIndex"
+                   class="commit absentParent" :data-parent_id="commit.id">
+                <div class="headerContent">
+                  <div>
+                    <button @click="$emit('commit_done')" class="task_done taskButton">
+                      <span v-if="!data.checked" style="color: rgba(0,0,0,.28);"> ☐ </span>
+                      <span v-else style="color: rgba(255,181,60,0.9)"> ☑ </span>
+                    </button>
+                    <a class="task_face">{{ String.fromCodePoint(commit?.customerInfo.face) }}</a>
+                    <span class="task_head"><strong>{{ commit?.customerInfo.userName }}</strong>
+                      {{ formatDate(commit.createdAt) }}</span>
+                  </div>
+                </div>
+                <div class="task_content"> {{ commit.text }}</div>
+                <div v-if="commit.Children.length" class="children commits-section">
+
+                  <commit
+                      v-for="(commit, commitIndex) in commit.Children"
+                      :key="'commit-'+commitIndex"
+                      :dataCurCommit="commit"
+                      :index="commitIndex"
+                      :commitsCurentPost="data.Commits"
+                      @commit_done="$emit('commit_done')"
+                  ></commit>
+
+                </div>
+              </div>
+
+            </div>
 
           </div>
         `
@@ -379,10 +421,10 @@
                                 return item
                             })
                             this.step = 'items';
-                            /*todo del*/
+                            /*todo del
                             setTimeout(() => {
                                 this.containChildrens()
-                            }, 1000);
+                            }, 1000);*/
                         }
                     }).catch((error) => {
                     this.step = 'error';
