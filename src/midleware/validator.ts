@@ -29,7 +29,6 @@ export function passwordValidInBodyMiddleware() {
         max: 20
     });
 }
-
 export function checkValidationInMiddleWare(req: Request, res: Response, next: NextFunction) {
     const errors = validationResult(req);
     if (errors.isEmpty()) next();
