@@ -1,18 +1,15 @@
-import {checkValidationInMiddleWare, idValid, textValidMiddleware} from "../midleware/validator";
+import {checkValidationInMiddleWare, idValid, postIdValidMid, textValidMiddleware} from "../midleware/validator";
 import {isCorrectToken} from "../midleware/iscorectToken";
-/*import Customer from "../models/customer";
-import Post from "../models/post";
-import Commit from "../models/Commits";*/
 import {Commit, Customer, Post} from '../models/modelsDb';
 import Tokens from "csrf";
 import {Op} from "sequelize";
 import express, {Express, NextFunction, Request, Response, Router} from 'express';
 import * as fs from "fs";
 import sharp from "sharp";
-
 import {upload} from '../midleware/loadFile'
 import multer from "multer";
 
+const LIMIT_SIZE_FILE: string | number = process.env.LIMIT_SIZE_LOADS_FILE || 102400;
 type FormatEnum = 'jpg' | 'png' | 'gif';
 const PAGE_PAGINATION: number = process.env.PAGE_PAGINATION ? parseInt(process.env.PAGE_PAGINATION) : 5;
 
@@ -22,12 +19,12 @@ const mimeTypeImg = ["image/jpg", "image/gif", "image/png", "image/jpeg"]
 const uploadMidleware = (req: Request, res: Response, next: NextFunction) => {
     upload.single('images')(req, res, async function (err) {
             if (err instanceof multer.MulterError) res.status(400).json({error: 'More one file was uploaded'});
-            else if (req.file && req.file.mimetype === "text/plain" && req.file.size > 1024) {
+            else if (req.file && req.file.mimetype === "text/plain" && req.file.size > LIMIT_SIZE_FILE) {
                 fs.unlink(req.file?.path, (unlinkError) => {
                     if (unlinkError) console.error('Error deleting file:', unlinkError);
                     else console.log('File deleted successfully');
                 });
-                res.status(400).json({error: 'Too mach size uploaded .txt file'});
+                res.status(400).json({errors: [{msg: 'Too mach size uploaded .txt file'}]});
             } else next()
         }
     )
@@ -82,7 +79,7 @@ router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkVa
 });
 
 /*create COMENT for Post todo move to POST*/
-router.post('/commit', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.post('/commit', uploadMidleware, isCorrectToken, textValidMiddleware(), postIdValidMid(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated || !req.session.customer) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
@@ -97,7 +94,7 @@ router.post('/commit', uploadMidleware, isCorrectToken, textValidMiddleware(), c
             text: req.body.text,
             post_id: req.body.post_id,
             children_comment_id: req.body.children_comment_id,
-            attachedFile:  attachedFile ? attachedFile.filename : '',
+            attachedFile: attachedFile ? attachedFile.filename : '',
         }])
         res.status(201).send(commitItem);
     } catch (e) {

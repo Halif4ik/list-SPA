@@ -183,8 +183,9 @@
           <div class="task_content">
             <p>{{ dataCurCommit.text }}</p>
             <a v-if="dataCurCommit.attachedFile && !dataCurCommit.attachedFile.includes('.txt')" class="img"
-               @click="emit_show_img_Comm(dataCurCommit.attachedFile)"><img class="task_content" style="width:100px" loading="lazy"
-                                                        :src="url+'static/' + dataCurCommit.attachedFile"><img>
+               @click="emit_show_img_Comm(dataCurCommit.attachedFile)"><img class="task_content" style="width:100px"
+                                                                            loading="lazy"
+                                                                            :src="url+'static/' + dataCurCommit.attachedFile"><img>
             </a>
             <a v-else-if="dataCurCommit.attachedFile" class="img"
                @click="emit_show_img_Comm(dataCurCommit.attachedFile)">
@@ -491,10 +492,8 @@
                         .then((response) => {
                             if (response.id) {
                                 this.$set(this.new_task, 'text', '');
-                                this.getTasks();
-                            } else {
-                                alert(`Ошибка при создании поста.${response?.errors[0]?.msg}`)
-                            }
+                            } else alert(`Ошибка при создании поста.${response?.errors[0]?.msg}`)
+                            this.getTasks();
                         });
                 }
             },
@@ -525,11 +524,10 @@
                         },
                     }).then(res => res.json())
                         .then((response) => {
-                            if (response.length) {
-                                this.getTasks();
-                                this.posting = true;
-                                this.$set(this.new_comit, 'text', '');
-                            }
+                            if (response.length) this.$set(this.new_comit, 'text', '');
+                            else alert(`Ошибка при добавление коммента.${response?.errors[0]?.msg}`)
+                            this.getTasks();
+                            this.posting = true;
                         });
                 }
             },

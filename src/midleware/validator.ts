@@ -9,6 +9,9 @@ export function idValid() {
 export function textValidMiddleware() {
     return body('text').trim().isLength({min: 2, max: 500}).escape().withMessage("Count characters  should be 2-500");
 }
+export function postIdValidMid() {
+    return body('post_id').isNumeric().withMessage("Post_id should be Number");
+}
 
 export function homePValid() {
     return body('homePage').optional({
