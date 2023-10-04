@@ -19,7 +19,6 @@ const PAGE_PAGINATION: number = process.env.PAGE_PAGINATION ? parseInt(process.e
 const router: Router = express.Router();
 const mimeTypeImg = ["image/jpg", "image/gif", "image/png"]
 
-/* todo this midleware cheking dosent work in windows,*/
 const uploadMidleware = (req: Request, res: Response, next: NextFunction) => {
     upload.single('images')(req, res, async function (err) {
             if (err instanceof multer.MulterError) res.status(400).json({error: 'More one file was uploaded'});
@@ -34,30 +33,33 @@ const uploadMidleware = (req: Request, res: Response, next: NextFunction) => {
     )
 };
 
+/* Resize the image to PNG format (you can adjust the options)*/
+async function reziseAndWriteIMG(attachedFile) {
+    const extentionImg = attachedFile?.mimetype && attachedFile.mimetype.slice(-3) as FormatEnum ? attachedFile.mimetype.slice(-3) : 'png';
+    if (attachedFile && mimeTypeImg.includes(attachedFile.mimetype)) {
+        const resizedImageBuffer: Buffer = await sharp(attachedFile.path)
+            .resize({width: 320, height: 240})
+            .toFormat(extentionImg)
+            .toBuffer();
+        // Save the resized image to a new file
+        fs.writeFile(attachedFile.path, resizedImageBuffer, async (writeErr: NodeJS.ErrnoException | null) => {
+            if (writeErr) {
+                throw new Error('writeErr');
+            }
+        })
+    }
+}
+
 /*create new Post  todo isCorrectToken,*/
 router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req, res) => {
     if (!req.session.isAuthenticated || !req.session.customer) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
     }
-    const attachedFile: Express.Multer.File | undefined = req.file;
-    const extentionImg = attachedFile?.mimetype && attachedFile.mimetype.slice(-3) as FormatEnum ? attachedFile.mimetype.slice(-3) : 'png';
 
     try {
-        // Resize the image to PNG format (you can adjust the options)
-        if (attachedFile && mimeTypeImg.includes(attachedFile.mimetype)) {
-            const resizedImageBuffer: Buffer = await sharp(attachedFile.path)
-                .resize({width: 320, height: 240})
-                .toFormat(extentionImg)
-                .toBuffer();
-            // Save the resized image to a new file
-            fs.writeFile(attachedFile.path, resizedImageBuffer, async (writeErr: NodeJS.ErrnoException | null) => {
-                if (writeErr) {
-                    console.error('Error writing resized image:', writeErr);
-                    return res.sendStatus(500);
-                }
-            })
-        }
+        const attachedFile: Express.Multer.File | undefined = req.file;
+        await reziseAndWriteIMG(attachedFile);
 
         const postItem: Post[] = await Post.bulkCreate([{
             checked: req.body.done === 'true',
@@ -70,26 +72,47 @@ router.post('/', uploadMidleware, isCorrectToken, textValidMiddleware(), checkVa
         }]);
         res.status(201).send(postItem[0]);
     } catch (e) {
+        if (e === 'writeErr') {
+            console.error('Error writing resized image: writeErr');
+            return res.sendStatus(500);
+        }
         console.log(e);
         res.sendStatus(404)
     }
 });
 
 /*create COMENT for Post todo move to POST*/
-router.post('/commit', isCorrectToken, uploadMidleware, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
+router.post('/commit', uploadMidleware, isCorrectToken, textValidMiddleware(), checkValidationInMiddleWare, async (req: Request, res: Response) => {
     if (!req.session.isAuthenticated || !req.session.customer) {
         console.log('create new task Error');
         return res.send({error: 'forbidden'});
     }
+    const attachedFile: Express.Multer.File | undefined = req.file;
+    await reziseAndWriteIMG(attachedFile);
+
+    console.log('create new task COMENT');
+    console.log({
+        CustomerId: req.session.customer[0].id,
+        text: req.body.text,
+        post_id: req.body.post_id,
+
+        children_comment_id: req.body.children_comment_id,
+        attachedFile:  attachedFile ? attachedFile.filename : '',
+    })
     try {
         const commitItem: Commit = await Commit.bulkCreate([{
             CustomerId: req.session.customer[0].id,
             text: req.body.text,
-            post_id: req.body.post_id
+            post_id: req.body.post_id,
+            children_comment_id: req.body.children_comment_id,
+            attachedFile:  attachedFile ? attachedFile.filename : '',
         }])
-
         res.status(201).send(commitItem);
     } catch (e) {
+        if (e === 'writeErr') {
+            console.error('Error writing resized image: writeErr');
+            return res.sendStatus(500);
+        }
         console.log(e);
         res.sendStatus(404)
     }
@@ -110,7 +133,7 @@ router.get('/', async (req: Request, res: Response) => {
             }
         });
         const posts: Post [] = await gettingAllPosts(req.query?.page, req.query?.revert);
-       /* console.log(JSON.stringify(SSS, null, 2));*/
+        /* console.log(JSON.stringify(SSS, null, 2));*/
         res.send({
             items: posts,
             loginOfCurrentUser: req.session.customer[0].login,
@@ -230,12 +253,12 @@ async function gettingAllPosts(needPage: string | any, revert: string | any, whe
                 {
                     model: Commit,
                     as: 'Children',
-                    attributes:['id','CustomerId','text','createdAt']
+                    attributes: ['id', 'CustomerId', 'text', 'createdAt', 'attachedFile', 'checkedCom']
                 },
                 {
                     model: Commit,
                     as: 'Parent',
-                    attributes:['id','post_id','text']
+                    attributes: ['id', 'post_id', 'text']
                 }
             ]
         },

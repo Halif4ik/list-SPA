@@ -117,7 +117,7 @@ main {
     margin-top: 10px;
 }
 
-.taskCompleted .task_content {
+.taskCompleted>.task_content {
     color: rgba(255, 181, 60, 0.9);
     /*text-decoration: line-through;*/
 }
