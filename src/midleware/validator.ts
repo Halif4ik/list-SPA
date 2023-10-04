@@ -7,7 +7,7 @@ export function idValid() {
 }
 
 export function textValidMiddleware() {
-    return body('text').trim().isLength({min: 2, max: 255}).escape().withMessage("Count characters  should be 2-255");
+    return body('text').trim().isLength({min: 2, max: 500}).escape().withMessage("Count characters  should be 2-500");
 }
 
 export function homePValid() {

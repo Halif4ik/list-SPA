@@ -14,9 +14,9 @@ Commit.init(
         CustomerId: {type: DataTypes.TINYINT.UNSIGNED},
         checkedCom: {type: DataTypes.BOOLEAN},
         children_comment_id: {allowNull: true, type: DataTypes.SMALLINT.UNSIGNED},
-        post_id: {allowNull: true, type: DataTypes.SMALLINT.UNSIGNED},
+        post_id: {allowNull: false, type: DataTypes.SMALLINT.UNSIGNED},
         text: {allowNull: false, type: DataTypes.STRING(500)},
-        attachedFile: {allowNull: true, type: DataTypes.STRING},
+        attachedFile: { type: DataTypes.STRING},
     },
     {sequelize, tableName: 'ComentsList'}
 );
@@ -71,6 +71,7 @@ Customer.hasMany(Post);
 Post.hasMany(Commit, {as: 'Commits', foreignKey: 'post_id'});
 Post.belongsTo(Customer, {as: 'Customers', foreignKey: 'CustomerId'});
 
+Commit.belongsTo(Post, {as: 'Posts', foreignKey: 'post_id'});
 Commit.belongsTo(Customer, {as: 'Customers', foreignKey: 'CustomerId'});
 Commit.belongsTo(Commit, {foreignKey: 'children_comment_id', as: 'Parent'});
 Commit.hasMany(Commit, {foreignKey: 'children_comment_id', as: 'Children'});

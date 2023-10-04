@@ -3,7 +3,7 @@ import {db} from './models/index'
 import dotenv from 'dotenv';
 import {awtingChangesAndGetAllPosts} from "./routes/api_V1_route";
 import {Server} from 'ws';
-import Post from "./models/post";
+import {Post} from "./models/modelsDb";
 
 const port: number = process.env.NODE_LOCAL_PORT ? parseInt(process.env.NODE_LOCAL_PORT) : 3001;
 const portWs: number = process.env.WS_LOCAL_PORT ? parseInt(process.env.WS_LOCAL_PORT) : 3000;
@@ -27,7 +27,7 @@ const routing = {
     },
 };
 
-db.sequelize.sync({force: false}).then((): void => {
+db.sequelize.sync({force: true}).then((): void => {
     const ws = new Server({port: portWs});
     ws.on('connection', (connection, req): void => {
         connection.on('message', async (message) => {

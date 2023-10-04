@@ -144,8 +144,6 @@
         props: ["dataCurCommit", "index", "commitsCurentPost", "url", "index_post_perent"],
         methods: {
             chekComment: function (idCurCommit, index_post_perent) {
-                console.log('idCurCommit-', idCurCommit);
-                console.log('index_post_perent-', index_post_perent);
                 this.dataCurCommit.checkedCom = !this.dataCurCommit.checkedCom;
                 this.$emit('commit_checked_child', idCurCommit, index_post_perent);
             },
@@ -154,7 +152,6 @@
                 return dataForCurrentPost
             },
             emit_show_img_Comm: function (attachedFile) {
-                console.log('emit_show_img_Comm-', attachedFile);
                 this.$emit('show_img_Comm', attachedFile);
             },
             formatDate(value) {
@@ -205,6 +202,7 @@
                 :index_post_perent="index_post_perent"
                 :commitsCurentPost="commitsCurentPost"
                 @show_img_Comm="emit_show_img_Comm"
+                @commit_checked_child="chekComment"
             ></commit>
           </div>
           </div>
@@ -225,11 +223,9 @@
                 return new Intl.DateTimeFormat('ru-RU', options).format(new Date(value));
             },
             tempFn(idCurCommit, index_post_perent) {
-                console.log('idCurCommit-', idCurCommit, index_post_perent);
                 this.$emit('commit_checked', idCurCommit, index_post_perent);
             },
             showChildrenContent(url) {
-                console.log('showChildrenContent-', url);
                 this.$emit('show_img', url);
             },
         },
@@ -389,7 +385,6 @@
         },
         methods: {
             showImg: function (url) {
-                console.log('url-', url);
                 url = this.host + 'static/' + url;
                 const lightbox = document.getElementById('lightbox');
                 const lightboxOverlay = document.getElementById('lightboxOverlay');
@@ -484,10 +479,6 @@
                     const route = this.apiVersion === 'v1' ? '/items' : '/router';
                     const qs = {action: this.apiVersion === 'v1' ? '' : 'createItem'};
 
-                    for (let [name, value] of formData) {
-                        console.log('addPost-', `${name} = ${value}`);
-                    }
-
                     this.attached = '';
                     fetch(this.apiURL + this.apiVersion + route + '?' + new URLSearchParams(qs), {
                         method: this.apiVersion === 'v1' ? 'POST' : 'POST',
@@ -520,11 +511,6 @@
                         formData.append("post_id", this.checkedComment.post_id);
                         formData.append("children_comment_id", this.checkedComment.id);
                         this.checkedComment = '';
-
-                    }
-
-                    for (let [name, value] of formData) {
-                        console.log('addCommit-', `${name} = ${value}`);
                     }
 
                     this.attached = '';
@@ -539,7 +525,8 @@
                         },
                     }).then(res => res.json())
                         .then((response) => {
-                            if (response.id) {
+                            if (response.length) {
+                                this.getTasks();
                                 this.posting = true;
                                 this.$set(this.new_comit, 'text', '');
                             }
@@ -582,19 +569,16 @@
             },
             /*if checked comment*/
             markCommitForCommit(idCurrentCommit, postIndex) {
-                console.log('!!markCommitForCommit-', idCurrentCommit, postIndex);
                 const markedComment = this.tasks[postIndex - 1].Commits.find(eachComment => idCurrentCommit === eachComment.id);
                 if (!this.checkedPost && !this.checkedComment) {
-                    console.log('IF-', markedComment);
                     this.$set(markedComment, 'checkedCom', !markedComment.checkedCom);
                     this.posting = !this.posting;
                     this.checkedComment = markedComment;
                 } else if (this.checkedComment.id === markedComment.id) {
-                    console.log('IF-', markedComment);
                     this.$set(markedComment, 'checkedCom', !markedComment.checkedCom);
                     this.posting = !this.posting;
                     this.checkedComment = '';
-                } else console.log('ELSE-', markedComment);
+                }
             },
             editTask(index) {
                 this.$set(this.tasks[index], 'editable', true);
@@ -686,7 +670,6 @@
             },
             // Handle the file input change event
             fileSelected(event) {
-                console.log('fileSelected-', event.target.files[0]);
                 this.attached = event.target.files[0];
             },
         },

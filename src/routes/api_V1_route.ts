@@ -17,7 +17,7 @@ type FormatEnum = 'jpg' | 'png' | 'gif';
 const PAGE_PAGINATION: number = process.env.PAGE_PAGINATION ? parseInt(process.env.PAGE_PAGINATION) : 5;
 
 const router: Router = express.Router();
-const mimeTypeImg = ["image/jpg", "image/gif", "image/png"]
+const mimeTypeImg = ["image/jpg", "image/gif", "image/png", "image/jpeg"]
 
 const uploadMidleware = (req: Request, res: Response, next: NextFunction) => {
     upload.single('images')(req, res, async function (err) {
@@ -88,17 +88,9 @@ router.post('/commit', uploadMidleware, isCorrectToken, textValidMiddleware(), c
         return res.send({error: 'forbidden'});
     }
     const attachedFile: Express.Multer.File | undefined = req.file;
+
     await reziseAndWriteIMG(attachedFile);
 
-    console.log('create new task COMENT');
-    console.log({
-        CustomerId: req.session.customer[0].id,
-        text: req.body.text,
-        post_id: req.body.post_id,
-
-        children_comment_id: req.body.children_comment_id,
-        attachedFile:  attachedFile ? attachedFile.filename : '',
-    })
     try {
         const commitItem: Commit = await Commit.bulkCreate([{
             CustomerId: req.session.customer[0].id,
