@@ -6,7 +6,7 @@ import {Server} from 'ws';
 import {Post} from "./models/modelsDb";
 
 const port: number = process.env.NODE_LOCAL_PORT ? parseInt(process.env.NODE_LOCAL_PORT) : 3001;
-const portWs: number = process.env.WS_LOCAL_PORT ? parseInt(process.env.WS_LOCAL_PORT) : 3000;
+const portWs: number = process.env.WS_LOCAL_PORT ? parseInt(process.env.WS_LOCAL_PORT) : 3002;
 dotenv.config();
 
 
@@ -38,9 +38,6 @@ db.sequelize.sync({force: false}).then((): void => {
             const handler = entity[method];
             if (!handler) return connection.send('"Not found"', {binary: false});
 
-             /*const json = JSON.stringify(args);
-             const parameters = json.substring(1, json.length - 1);
-             console.log('ip name.method (parameters)-', `${req.socket.remoteAddress} ${name}.${method}(${parameters})`);*/
             try {
                 const result = await handler(...args);
                 connection.send(JSON.stringify(result), {binary: false});
