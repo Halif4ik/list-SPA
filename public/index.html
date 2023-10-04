@@ -289,7 +289,7 @@
                 <a v-if="commit.attachedFile && !commit.attachedFile.includes('.txt')" class="img"
                    @click="$emit('show_img',commit.attachedFile)"><img class="task_content" style="width:100px"
                                                                        loading="lazy"
-                                                                       :src="url+'static/' + data.attachedFile"><img>
+                                                                       :src="url+'static/' + commit.attachedFile"><img>
                 </a>
                 <a v-else-if="commit.attachedFile" class="img"
                    @click="$emit('show_img',commit.attachedFile)">
