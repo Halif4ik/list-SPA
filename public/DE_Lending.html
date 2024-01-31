@@ -1,0 +1,209 @@
+<style>
+    #adoric_smartbox_3773a931f4d01 {
+        top: 130px !important;
+    }
+
+    #adoric_smartbox_3773a931f4d01 h2.main-head {
+        font-style: normal;
+        font-variant: normal;
+        font-weight: 600;
+        text-align: center;
+        font-size: 36px;
+        line-height: 1.24;
+        display: block !important;
+        width: 100%;
+        height: auto;
+        left: 0;
+        white-space: unset;
+        overflow-wrap: break-word;
+        opacity: 1;
+        text-shadow: rgb(58 63 69 / 25%) 0px 2px 2px;
+        text-transform: uppercase;
+        position: absolute;
+        color: #fff !important;
+        letter-spacing: 0.5rem !important;
+        font-family: Verlag-Bold, sans-serif !important;
+        top: -45px;
+    }
+    #adoric_smartbox_3773a931f4d01 h2.main-head.links {
+        font-size: 22px;
+        top: 245px;
+    }
+
+    @media (max-width: 850px) {
+        #adoric_smartbox_3773a931f4d01 {
+            width: 650px !important;
+        }
+
+        #adoric_smartbox_3773a931f4d01 h2.main-head {
+            font-size: 34px;
+            top: -50px;
+        }
+    }
+
+    @media (max-width: 660px) {
+        #adoric_smartbox_3773a931f4d01 {
+            top: 70px !important;
+            width: 420px !important;
+        }
+
+        #adoric_smartbox_3773a931f4d01 h2.main-head {
+            font-size: 32px;
+            top: -115px;
+        }
+        #adoric_smartbox_3773a931f4d01 h2.main-head.links {
+            top: 250px;
+        }
+    }
+
+    @media (max-width: 450px) {
+        #adoric_smartbox_3773a931f4d01 {
+            top: 114px !important;
+            width: 400px !important;
+        }
+
+        #adoric_smartbox_3773a931f4d01 h2.main-head {
+            font-size: 26px;
+            top: -45px;
+        }
+        #adoric_smartbox_3773a931f4d01 h2.main-head.links {
+            top: 215px;
+            font-size: 18px;
+        }
+    }
+
+    @media (max-width: 421px) {
+        #adoric_smartbox_3773a931f4d01 {
+            top: 221px !important;
+            width: 370px !important;
+        }
+
+        #adoric_smartbox_3773a931f4d01 h2.main-head {
+            top: -130px;
+        }
+    }
+
+    @media (max-width: 374px) {
+        #adoric_smartbox_3773a931f4d01 {
+            width: 300px !important;
+        }
+
+        #adoric_smartbox_3773a931f4d01 h2.main-head {
+            font-size: 20px;
+            top: -85px;
+        }
+        #adoric_smartbox_3773a931f4d01 h2.main-head.links {
+            font-size: 16px;
+        }
+    }
+</style>
+<script>
+    (function () {
+        let mainContent = document.querySelector('.mainContent');
+        let additionalContent = document.querySelector('.additional-content');
+        var thankYouPage = '@media (max-width:1800px){.mainContent{min-height:1024px!important;background-position:center center}}@media (max-width:991px){.mainContent{min-height:700px!important}}';
+        var styleElem = document.createElement('STYLE');
+        styleElem.textContent = thankYouPage;
+        document.head.append(styleElem);
+        mainContent.removeChild(additionalContent);
+    })();
+</script>
+<style>
+    @media (max-width: 1800px) {
+        .mainContent {
+            min-height: 1024px !important;
+            background-position: center center;
+        }
+    }
+
+    @media (max-width: 991px) {
+        .mainContent {
+            min-height: 700px !important;
+        }
+    }
+</style>
+
+
+<!--second-->
+<script>
+    /* PUT TEXTS IN FORM and add block links after thank you message */
+    (function () {
+        window.scrollTo(0, 0);
+
+        function createElementFromHTML(htmlString) {
+            var div = document.createElement('div');
+            div.innerHTML = htmlString.trim();
+            return div.firstChild;
+        }
+        var selector = '.__ADORIC__.' + self.identifier;
+        var lb = document.querySelector('.' + self.identifier + '.__ADORIC__');
+        var tabindex = document.querySelector('.' + self.identifier + ' [tabindex]');
+        var mainHead = "<h2 class='main-head'>Danke für deine Registrierung.<br>Wir haben dir eine E-Mail mit einem Link zur Bestätigung deiner Anmeldung gesendet.</h2>";
+        var headAboveBlockLinks = createElementFromHTML("<h2 class='main-head links'>Siehe dir unsere Produkte an:</h2>");
+        tabindex.insertBefore(createElementFromHTML(mainHead), tabindex.querySelector('.adoric_element'));
+        tabindex.insertBefore(headAboveBlockLinks, tabindex.querySelector('.adoric_element'));
+        window.scrollTo(0, 0);
+
+
+        /*add block links after thank you message */
+        const row = document.querySelector("#shopify-section-header-v2 .dropdown-main-content div.col-lg-8 .header-dropdown-items");
+        const myRow = row.cloneNode(true);
+        myRow.lastElementChild.remove();
+
+        myRow.style.position = 'absolute';
+        myRow.style.width = '750px';
+        myRow.style.zIndex = '1';
+        myRow.style.top = '585px';
+        myRow.style.margin = '0';
+        myRow.style.transform = 'translateX(-50%)';
+        myRow.style.left = '50%';
+        /*add media Query */
+        var linksAfterThankYou = '@media (max-width: 991px) { ' + selector + '+.header-dropdown-items { flex-wrap: nowrap; width: 350px !important; } ' + selector + '+.header-dropdown-items .header-dropdown-item-holder>a:nth-child(2) { color: white; } } @media (max-width: 850px) { ' + selector + '+.header-dropdown-items { top: 570px !important; } ' + selector + ' .main-head.links { top: 230px !important; } } @media (max-width: 580px) { ' + selector + '+.header-dropdown-items { width: 95vw !important; } ' + selector + '+.header-dropdown-items .header-dropdown-item-holder { max-width: 33% !important; } ' + selector + '+.header-dropdown-items .header-dropdown-item-holder>a:nth-child(2) { font-size: 2.7vw!important; } } @media (max-width: 421px) { ' + selector + '+.header-dropdown-items { top: 610px !important; } ' + selector + ' .main-head.links { top: 155px !important; } }';
+        var styleElem = document.createElement('STYLE');
+        styleElem.textContent = linksAfterThankYou;
+        document.head.append(styleElem);
+
+        let textHeaders = myRow.querySelectorAll("a>p");
+        textHeaders.forEach(oneHeader => {
+            oneHeader.style.position = 'absolute';
+            oneHeader.style.top = '0';
+
+        });
+        lb.after(myRow);
+        /*add sent event from press to Links*/
+        myRow.addEventListener('click', function(event) {
+            var rectWithLink = event.target.closest('.header-dropdown-item-holder');
+            if (rectWithLink ) {
+                const nameLink = rectWithLink.querySelector('.header-dropdown-item-holder A P').textContent.trim();
+                console.log('nameLink-',nameLink);
+
+                pushCustomGAEvent('Adoric - ' + self.campaignTitle, `Click by ${nameLink}`, self.versionTitle);
+            }
+        });
+        function pushCustomGAEvent(eventType, eventElementType, elementId) {
+            if (window.preDataLayer) {
+                window.preDataLayer.push({
+                    event: 'newEvent',
+                    newEventData: {
+                        type: eventType,
+                        elementType: eventElementType,
+                        elementId: elementId
+                    }
+                });
+            }
+        }
+
+    })();
+</script>
+
+
+
+<!--cheking-->
+<script>
+    preDataLayer.forEach((element) => {
+            if (element?.['newEventData']?.['type'] && element['newEventData']['type'].includes('Adoric -')) {
+                console.log(element);
+            }
+        }
+    )
+</script>
